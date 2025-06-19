@@ -1,0 +1,3 @@
+- Integrate the new `workflow_interface.py` directly into the web UI for easier access.
+- Provide a Docker Compose file to launch Agent Zero with one command including dependencies like Redis or database if required.
+- Add authentication options for the API used by the workflow interface.
