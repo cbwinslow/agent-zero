@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""Simple workflow interface for Agent Zero.
+
+This script collects various input sources and sends them to the running
+Agent Zero instance via the message API. It supports providing a text
+objective, local files, URLs and GitHub repositories.
+"""
+
+import argparse
+import os
+import shutil
+import subprocess
+import requests
+import zipfile
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Agent Zero workflow interface"
+    )
+    parser.add_argument(
+        "--objective",
+        help="Objective text or path to text file",
+        required=True,
+    )
+    parser.add_argument(
+        "--files", nargs="*", help="Local file paths to attach"
+    )
+    parser.add_argument(
+        "--urls", nargs="*", help="URLs to download and attach"
+    )
+    parser.add_argument(
+        "--repos", nargs="*", help="Git repositories to clone and attach"
+    )
+    parser.add_argument(
+        "--api",
+        default="http://localhost:5000/message",
+        help="Agent Zero message API",
+    )
+    return parser.parse_args()
+
+
+def read_objective(value: str) -> str:
+    if os.path.isfile(value):
+        with open(value, "r", encoding="utf-8") as f:
+            return f.read()
+    return value
+
+
+def ensure_dir(path: str) -> str:
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def fetch_url(url: str, out_dir: str) -> str | None:
+    try:
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        filename = url.replace("://", "_").replace("/", "_")[:50]
+        if not filename:
+            filename = "download"
+        path = os.path.join(out_dir, f"{filename}.txt")
+        with open(path, "wb") as f:
+            f.write(resp.content)
+        return path
+    except Exception as e:
+        print(f"Failed to fetch {url}: {e}")
+        return None
+
+
+def clone_repo(repo: str, out_dir: str) -> str | None:
+    name = repo.split("/")[-1].replace(".git", "")
+    dest = os.path.join(out_dir, name)
+    try:
+        subprocess.check_call(["git", "clone", repo, dest])
+        zip_path = f"{dest}.zip"
+        with zipfile.ZipFile(zip_path, "w") as z:
+            for root, _, files in os.walk(dest):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arc = os.path.relpath(file_path, dest)
+                    z.write(file_path, arc)
+        shutil.rmtree(dest)
+        return zip_path
+    except Exception as e:
+        print(f"Failed to clone {repo}: {e}")
+        return None
+
+
+def main():
+    args = parse_args()
+    upload_dir = ensure_dir(os.path.join("tmp", "workflow"))
+    objective = read_objective(args.objective)
+
+    attachments: list[str] = []
+
+    if args.files:
+        for path in args.files:
+            if os.path.isfile(path):
+                dest = os.path.join(upload_dir, os.path.basename(path))
+                shutil.copy2(path, dest)
+                attachments.append(dest)
+
+    if args.urls:
+        for url in args.urls:
+            file_path = fetch_url(url, upload_dir)
+            if file_path:
+                attachments.append(file_path)
+
+    if args.repos:
+        for repo in args.repos:
+            zip_path = clone_repo(repo, upload_dir)
+            if zip_path:
+                attachments.append(zip_path)
+
+    files_payload = []
+    for path in attachments:
+        files_payload.append(
+            (
+                "attachments",
+                (os.path.basename(path), open(path, "rb")),
+            )
+        )
+
+    data = {"text": objective}
+    try:
+        resp = requests.post(args.api, data=data, files=files_payload, timeout=30)
+        print(resp.status_code, resp.text)
+    finally:
+        for _, (_, fh) in files_payload:
+            fh.close()
+
+
+if __name__ == "__main__":
+    main()
