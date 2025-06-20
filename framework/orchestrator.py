@@ -21,7 +21,8 @@ def create_project(name: str) -> Path:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     cfg = load_config()
     project_name = cfg.get("project", "demo")
     project_dir = create_project(project_name)
-    print(f"Initialized project at {project_dir}")
+    logging.info(f"Initialized project at {project_dir}")
