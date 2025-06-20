@@ -1,0 +1,3 @@
+- Expand the orchestrator to spawn multiple agent processes and manage task queues.
+- Implement persistent context storage so agents can share notes across projects.
+- Provide example configurations for using OpenRouter and Ollama with local models.

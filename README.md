@@ -157,6 +157,7 @@ docker run -p 50001:80 frdel/agent-zero-run
 ## Coming soon
 
 - **MCP**
+- Multi-Agent Development Framework for advanced project orchestration (see `framework/` directory).
 - **Knowledge and RAG Tools**
 
 ## 🎯 Changelog
