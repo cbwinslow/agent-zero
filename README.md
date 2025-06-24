@@ -118,6 +118,11 @@ docker run -p 50001:80 frdel/agent-zero-run
 # Visit http://localhost:50001 to start
 ```
 
+Before starting, copy `example.env` to `.env` and set any API keys you plan to use.
+If you intend to run Agent Zero locally alongside a Docker instance, set a value
+for `RFC_PASSWORD` in your `.env` file to avoid `No RFC password` errors when
+remote function calls are triggered.
+
 ## 🐳 Fully Dockerized, with Speech-to-Text and TTS
 
 ![Settings](docs/res/settings-page-ui.png)

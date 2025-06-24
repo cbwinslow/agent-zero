@@ -526,6 +526,7 @@ Now we can configure Agent Zero - select models, settings, API Keys etc. Refer t
 
 ## 7. Configure Agent Zero RFC
 Agent Zero needs to be configured further to redirect some functions to the Docker container. This is crucial for development as A0 needs to run in a standardized environment to support all features.
+Before proceeding, add a value for `RFC_PASSWORD` in your `.env` file.  This password must match between your local and Docker instances and is required for remote function calls.
 1. Go in "Settings" page in the Web UI of your local instance and go in the "Development" section.
 2. Set "RFC Destination URL" to `http://localhost`
 3. Set the two ports (HTTP and SSH) to the ones used when creating the Docker container
