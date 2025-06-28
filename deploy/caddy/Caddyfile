@@ -1,0 +1,20 @@
+a0.cloud-curio.cc {
+    handle_path /oauth2/* {
+        reverse_proxy http://127.0.0.1:4180
+    }
+
+    @forwardAuth {
+        not path /oauth2/*
+    }
+    reverse_proxy @forwardAuth http://127.0.0.1:4180/oauth2/auth {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Scheme {scheme}
+    }
+
+    handle_response @forwardAuth 401 {
+        redir /oauth2/start?rd={uri}
+    }
+
+    reverse_proxy http://127.0.0.1:50001
+}
