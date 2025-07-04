@@ -30,7 +30,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest
+          pytest tests/
 
       - name: Dependabot metadata
         id: metadata
