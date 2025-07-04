@@ -49,6 +49,7 @@ class ModelProvider(Enum):
     GROQ = "Groq"
     HUGGINGFACE = "HuggingFace"
     LMSTUDIO = "LM Studio"
+    LOCALAI = "LocalAI"
     MISTRALAI = "Mistral AI"
     OLLAMA = "Ollama"
     OPENAI = "OpenAI"
@@ -191,6 +192,46 @@ def get_lmstudio_embedding(
     if not base_url:
         base_url = get_lmstudio_base_url()
     return OpenAIEmbeddings(model=model_name, api_key="none", base_url=base_url, check_embedding_ctx_length=False, **kwargs)  # type: ignore
+
+
+# LocalAI and other OpenAI compatible interfaces
+def get_localai_base_url():
+    return (
+        dotenv.get_dotenv_value("LOCALAI_BASE_URL")
+        or f"http://{runtime.get_local_url()}:8080/v1"
+    )
+
+
+def get_localai_chat(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_localai_base_url()
+    if not api_key:
+        api_key = get_api_key("localai") or "none"
+    return ChatOpenAI(model_name=model_name, base_url=base_url, api_key=api_key, **kwargs)  # type: ignore
+
+
+def get_localai_embedding(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_localai_base_url()
+    if not api_key:
+        api_key = get_api_key("localai") or "none"
+    return OpenAIEmbeddings(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
+        check_embedding_ctx_length=False,
+        **kwargs,
+    )  # type: ignore
 
 
 # Anthropic models
