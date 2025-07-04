@@ -1,0 +1,2 @@
+- Provide a helper script to update `.env` automatically with user-provided API keys before pushing it into the container.
+- Offer an optional parameter in `create_lxc.sh` for memory and CPU settings so deployments can be tuned for available hardware.
