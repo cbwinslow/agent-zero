@@ -1,0 +1,2 @@
+- Implement a dedicated MCP server to parse objectives and produce task plans.
+- Add new entry in mcp_servers.json to run the planner locally.

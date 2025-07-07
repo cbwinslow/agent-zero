@@ -3,7 +3,9 @@
         {
             "name": "local_tools",
             "command": "python3",
-            "args": ["mcp_scripts/local_server.py"],
+            "args": [
+                "mcp_scripts/local_server.py"
+            ],
             "disabled": false
         },
         {
@@ -12,6 +14,14 @@
             "headers": {
                 "Authorization": "Bearer <TOKEN>"
             },
+            "disabled": false
+        },
+        {
+            "name": "objective_planner",
+            "command": "python3",
+            "args": [
+                "mcp_scripts/objective_planner.py"
+            ],
             "disabled": false
         }
     ]
