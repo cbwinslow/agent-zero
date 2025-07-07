@@ -1,0 +1,4 @@
+- Set up Dependabot for automated dependency updates.
+- Consider caching Python packages to speed up CI.
+- Add deployment steps to push Docker image to registry when credentials are provided.
+- Integrate artifact analysis in the agent to provide automated improvement suggestions.
