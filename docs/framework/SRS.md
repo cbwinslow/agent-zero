@@ -8,7 +8,7 @@ Enable coordinated AI agents to iteratively design, implement, and deploy applic
 
 ## Key Components
 
-- **Agents:** specialized workers handling analysis, coding, and deployment.
+- **Agents:** specialized workers handling analysis, coding, deployment and other tasks. The framework includes templates for research, data analysis and code review agents.
 - **Orchestrator:** coordinates agents, manages tasks and memory.
 - **Knowledge Base:** stores project notes and previous experience.
 - **Tools:** Docker, Node.js, Python, and other utilities for building and deploying software.
