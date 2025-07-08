@@ -224,6 +224,15 @@ def get_localai_embedding(
     api_key=None,
     **kwargs,
 ):
+    """
+    Instantiate an OpenAI-compatible embedding model using a LocalAI backend.
+    
+    Parameters:
+        model_name (str): The name of the embedding model to use.
+    
+    Returns:
+        An instance of OpenAIEmbeddings configured to communicate with a LocalAI server.
+    """
     if not base_url:
         base_url = get_localai_base_url()
     if not api_key:
@@ -239,6 +248,12 @@ def get_localai_embedding(
 
 # AnythingLLM and other OpenAI compatible interfaces
 def get_anythingllm_base_url():
+    """
+    Retrieve the base URL for the AnythingLLM API from environment variables or return the default local URL if not set.
+    
+    Returns:
+        str: The AnythingLLM API base URL.
+    """
     return (
         dotenv.get_dotenv_value("ANYTHINGLLM_BASE_URL")
         or f"http://{runtime.get_local_url()}:3001/v1"
@@ -251,6 +266,15 @@ def get_anythingllm_chat(
     api_key=None,
     **kwargs,
 ):
+    """
+    Instantiate a ChatOpenAI client configured for the AnythingLLM provider.
+    
+    Parameters:
+        model_name (str): The name of the chat model to use.
+    
+    Returns:
+        ChatOpenAI: An instance configured to interact with the AnythingLLM API.
+    """
     if not base_url:
         base_url = get_anythingllm_base_url()
     if not api_key:
@@ -264,6 +288,17 @@ def get_anythingllm_embedding(
     api_key=None,
     **kwargs,
 ):
+    """
+    Instantiate an OpenAI-compatible embedding model for the AnythingLLM provider.
+    
+    If not specified, the base URL and API key are retrieved from environment variables or set to defaults. Additional keyword arguments are passed to the embedding model constructor.
+    
+    Parameters:
+        model_name (str): The name of the embedding model to use.
+    
+    Returns:
+        An instance of OpenAIEmbeddings configured for the AnythingLLM provider.
+    """
     if not base_url:
         base_url = get_anythingllm_base_url()
     if not api_key:
@@ -273,6 +308,9 @@ def get_anythingllm_embedding(
 
 # TogetherAI and other OpenAI compatible interfaces
 def get_togetherai_base_url():
+    """
+    Retrieve the TogetherAI API base URL from environment variables or return the default public endpoint.
+    """
     return (
         dotenv.get_dotenv_value("TOGETHERAI_BASE_URL")
         or "https://api.together.ai/v1"
@@ -285,6 +323,15 @@ def get_togetherai_chat(
     api_key=None,
     **kwargs,
 ):
+    """
+    Instantiate a TogetherAI chat model client configured with the specified model name and credentials.
+    
+    Parameters:
+        model_name (str): The name of the TogetherAI chat model to use.
+    
+    Returns:
+        ChatOpenAI: An instance of the TogetherAI chat model client.
+    """
     if not base_url:
         base_url = get_togetherai_base_url()
     if not api_key:
@@ -298,6 +345,15 @@ def get_togetherai_embedding(
     api_key=None,
     **kwargs,
 ):
+    """
+    Instantiate an OpenAI-compatible embedding model configured for TogetherAI.
+    
+    Parameters:
+        model_name (str): The name of the embedding model to use.
+    
+    Returns:
+        An instance of OpenAIEmbeddings configured to use the TogetherAI API.
+    """
     if not base_url:
         base_url = get_togetherai_base_url()
     if not api_key:
@@ -312,6 +368,15 @@ def get_grok_chat(
     base_url=None,
     **kwargs,
 ):
+    """
+    Instantiate a Grok chat model client using the specified model name and configuration.
+    
+    Parameters:
+        model_name (str): The name of the Grok chat model to use.
+    
+    Returns:
+        ChatOpenAI: An instance configured for the Grok API endpoint.
+    """
     if not api_key:
         api_key = get_api_key("grok")
     if not base_url:
@@ -325,6 +390,15 @@ def get_grok_embedding(
     base_url=None,
     **kwargs,
 ):
+    """
+    Instantiate an OpenAI-compatible embedding model configured for the Grok API.
+    
+    Parameters:
+        model_name (str): The name of the embedding model to use.
+    
+    Returns:
+        An instance of OpenAIEmbeddings configured to interact with the Grok API endpoint.
+    """
     if not api_key:
         api_key = get_api_key("grok")
     if not base_url:
@@ -339,6 +413,11 @@ def get_anthropic_chat(
     base_url=None,
     **kwargs,
 ):
+    """
+    Instantiate and return a ChatAnthropic client for the specified model.
+    
+    If not provided, the API key and base URL are retrieved from environment variables or set to defaults.
+    """
     if not api_key:
         api_key = get_api_key("anthropic")
     if not base_url:
