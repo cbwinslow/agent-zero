@@ -1,0 +1,3 @@
+- Explore using Textual's CSS theming to better mirror Warp.dev's look and feel.
+- Provide a script to convert `config/mcp_servers.json` into the `tmp/settings.json` format for easier configuration.
+- Consider bundling the WarpDev TUI as a standalone binary with PyInstaller for simple distribution.

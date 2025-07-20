@@ -1,0 +1,28 @@
+{
+    "mcp_servers": [
+        {
+            "name": "local_tools",
+            "command": "python3",
+            "args": [
+                "mcp_scripts/local_server.py"
+            ],
+            "disabled": false
+        },
+        {
+            "name": "remote_api",
+            "url": "https://api.example.com/mcp",
+            "headers": {
+                "Authorization": "Bearer <TOKEN>"
+            },
+            "disabled": false
+        },
+        {
+            "name": "objective_planner",
+            "command": "python3",
+            "args": [
+                "mcp_scripts/objective_planner.py"
+            ],
+            "disabled": false
+        }
+    ]
+}
