@@ -5,7 +5,7 @@ Provides a simplified interface to the orchestration system.
 
 import json
 import logging
-import os
+
 from pathlib import Path
 
 from framework.orchestration.setup import initialize_orchestration_system
@@ -23,6 +23,22 @@ ORCHESTRATION_DIR = CONFIG_DIR / "orchestration"
 CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 ORCHESTRATION_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def load_workflow(path: Path) -> list[dict]:
+    if path.exists():
+        return json.loads(path.read_text()).get("agents", [])
+    return []
+
+
+def spawn_agents(workflow_path: Path) -> None:
+    agents = load_workflow(workflow_path)
+    for spec in agents:
+        mod = importlib.import_module(spec["module"])
+        cls = getattr(mod, spec["class"])
+        agent = cls(spec.get("name", "agent"))
+        logging.info("Spawning %s", agent.name)
+        agent.run()
 
 
 def load_config(name: str = "default.json") -> dict:
@@ -64,5 +80,4 @@ if __name__ == "__main__":
     cfg = load_config()
     project_name = cfg.get("project", "demo")
     project_dir = create_project(project_name)
-    logging.info(f"Initialized project at {project_dir}")
-    logging.info(f"Orchestration system initialized with {len(model_orchestrator.models)} models and {len(agent_orchestrator.agents)} agents")
+
