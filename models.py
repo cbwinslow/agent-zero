@@ -49,7 +49,11 @@ class ModelProvider(Enum):
     GROQ = "Groq"
     HUGGINGFACE = "HuggingFace"
     LMSTUDIO = "LM Studio"
+    LOCALAI = "LocalAI"
     MISTRALAI = "Mistral AI"
+    ANYTHINGLLM = "AnythingLLM"
+    TOGETHERAI = "Together AI"
+    GROK = "Grok"
     OLLAMA = "Ollama"
     OPENAI = "OpenAI"
     OPENAI_AZURE = "OpenAI Azure"
@@ -191,6 +195,141 @@ def get_lmstudio_embedding(
     if not base_url:
         base_url = get_lmstudio_base_url()
     return OpenAIEmbeddings(model=model_name, api_key="none", base_url=base_url, check_embedding_ctx_length=False, **kwargs)  # type: ignore
+
+
+# LocalAI and other OpenAI compatible interfaces
+def get_localai_base_url():
+    return (
+        dotenv.get_dotenv_value("LOCALAI_BASE_URL")
+        or f"http://{runtime.get_local_url()}:8080/v1"
+    )
+
+
+def get_localai_chat(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_localai_base_url()
+    if not api_key:
+        api_key = get_api_key("localai") or "none"
+    return ChatOpenAI(model_name=model_name, base_url=base_url, api_key=api_key, **kwargs)  # type: ignore
+
+
+def get_localai_embedding(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_localai_base_url()
+    if not api_key:
+        api_key = get_api_key("localai") or "none"
+    return OpenAIEmbeddings(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
+        check_embedding_ctx_length=False,
+        **kwargs,
+    )  # type: ignore
+
+
+# AnythingLLM and other OpenAI compatible interfaces
+def get_anythingllm_base_url():
+    return (
+        dotenv.get_dotenv_value("ANYTHINGLLM_BASE_URL")
+        or f"http://{runtime.get_local_url()}:3001/v1"
+    )
+
+
+def get_anythingllm_chat(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_anythingllm_base_url()
+    if not api_key:
+        api_key = get_api_key("anythingllm") or "none"
+    return ChatOpenAI(model_name=model_name, base_url=base_url, api_key=api_key, **kwargs)  # type: ignore
+
+
+def get_anythingllm_embedding(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_anythingllm_base_url()
+    if not api_key:
+        api_key = get_api_key("anythingllm") or "none"
+    return OpenAIEmbeddings(model=model_name, api_key=api_key, base_url=base_url, check_embedding_ctx_length=False, **kwargs)  # type: ignore
+
+
+# TogetherAI and other OpenAI compatible interfaces
+def get_togetherai_base_url():
+    return (
+        dotenv.get_dotenv_value("TOGETHERAI_BASE_URL")
+        or "https://api.together.ai/v1"
+    )
+
+
+def get_togetherai_chat(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_togetherai_base_url()
+    if not api_key:
+        api_key = get_api_key("togetherai")
+    return ChatOpenAI(model_name=model_name, api_key=api_key, base_url=base_url, **kwargs)  # type: ignore
+
+
+def get_togetherai_embedding(
+    model_name: str,
+    base_url=None,
+    api_key=None,
+    **kwargs,
+):
+    if not base_url:
+        base_url = get_togetherai_base_url()
+    if not api_key:
+        api_key = get_api_key("togetherai")
+    return OpenAIEmbeddings(model=model_name, api_key=api_key, base_url=base_url, **kwargs)  # type: ignore
+
+
+# Grok models
+def get_grok_chat(
+    model_name: str,
+    api_key=None,
+    base_url=None,
+    **kwargs,
+):
+    if not api_key:
+        api_key = get_api_key("grok")
+    if not base_url:
+        base_url = dotenv.get_dotenv_value("GROK_BASE_URL") or "https://api.grok.ai/v1"
+    return ChatOpenAI(api_key=api_key, model=model_name, base_url=base_url, **kwargs)  # type: ignore
+
+
+def get_grok_embedding(
+    model_name: str,
+    api_key=None,
+    base_url=None,
+    **kwargs,
+):
+    if not api_key:
+        api_key = get_api_key("grok")
+    if not base_url:
+        base_url = dotenv.get_dotenv_value("GROK_BASE_URL") or "https://api.grok.ai/v1"
+    return OpenAIEmbeddings(model=model_name, api_key=api_key, base_url=base_url, **kwargs)  # type: ignore
 
 
 # Anthropic models

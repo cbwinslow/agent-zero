@@ -1,0 +1,6 @@
+{
+  "agents": [
+    {"module": "framework.agents.dummy_agent", "class": "DummyAgent", "name": "agent1"},
+    {"module": "framework.agents.dummy_agent", "class": "DummyAgent", "name": "agent2"}
+  ]
+}

@@ -118,6 +118,11 @@ docker run -p 50001:80 frdel/agent-zero-run
 # Visit http://localhost:50001 to start
 ```
 
+Before starting, copy `example.env` to `.env` and set any API keys you plan to use.
+If you intend to run Agent Zero locally alongside a Docker instance, set a value
+for `RFC_PASSWORD` in your `.env` file to avoid `No RFC password` errors when
+remote function calls are triggered.
+
 ## 🐳 Fully Dockerized, with Speech-to-Text and TTS
 
 ![Settings](docs/res/settings-page-ui.png)
@@ -161,6 +166,18 @@ docker run -p 50001:80 frdel/agent-zero-run
 - **Knowledge and RAG Tools**
 
 ## 🎯 Changelog
+
+### v0.8.7 - Formatting, Document RAG Latest
+[Release video](https://youtu.be/OQJkfofYbus)
+- markdown rendering in responses
+- live response rendering
+- document Q&A tool
+
+### v0.8.6 - Merge and update
+[Release video](https://youtu.be/l0qpK3Wt65A)
+- Merge with Hacking Edition
+- browser-use upgrade and integration re-work
+- tunnel provider switch
 
 ### v0.8.5 - **MCP Server + Client**
 [Release video](https://youtu.be/pM5f4Vz3_IQ)

@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+import re
+import shutil
+import socket
+import subprocess
+from pathlib import Path
+
+DEFAULT_HTTP = 55080
+DEFAULT_SSH = 55022
+DEFAULT_WEB = 50080
+
+
+def get_container_ports():
+    ports = set()
+    docker = shutil.which('docker')
+    lazydocker = shutil.which('lazydocker')
+    cmd = None
+    if docker:
+        cmd = [docker, 'ps', '--format', '{{.Ports}}']
+    elif lazydocker:
+        cmd = [lazydocker, 'list']
+    if not cmd:
+        return ports
+    try:
+        out = subprocess.check_output(cmd, text=True)
+    except Exception:
+        return ports
+    for line in out.splitlines():
+        for part in line.split(','):
+            m = re.search(r'(\d+)(?:-\d+)?->', part)
+            if m:
+                try:
+                    ports.add(int(m.group(1)))
+                except ValueError:
+                    pass
+    return ports
+
+
+def port_available(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind(('localhost', port))
+        except OSError:
+            return False
+        return True
+
+
+def find_free_port(start):
+    port = start
+    while not port_available(port):
+        port += 1
+    return port
+
+
+PORT_FILES = {
+    'settings_http': ('python/helpers/settings.py', r'rfc_port_http=\d+'),
+    'settings_ssh': ('python/helpers/settings.py', r'rfc_port_ssh=\d+'),
+    'agent_http': ('agent.py', r'"80/tcp": \d+'),
+    'agent_ssh': ('agent.py', r'"22/tcp": \d+'),
+    'agent_ssh_port': ('agent.py', r'code_exec_ssh_port: int = \d+'),
+    'compose_web': ('docker/run/docker-compose.yml', r'\d+:80"'),
+    'compose_cuda_web': ('docker/run/docker-compose.cuda.yml', r'\d+:80"'),
+}
+
+
+def replace_in_file(path: Path, pattern: str, replacement: str):
+    text = path.read_text()
+    new_text = re.sub(pattern, replacement, text)
+    if text != new_text:
+        path.write_text(new_text)
+
+
+def main():
+    ports_in_use = get_container_ports()
+    changed = False
+    http_port = DEFAULT_HTTP
+    ssh_port = DEFAULT_SSH
+    web_port = DEFAULT_WEB
+
+    if not port_available(http_port) or http_port in ports_in_use:
+        http_port = find_free_port(http_port + 1)
+        changed = True
+    if not port_available(ssh_port) or ssh_port in ports_in_use:
+        ssh_port = find_free_port(ssh_port + 1)
+        changed = True
+    if not port_available(web_port) or web_port in ports_in_use:
+        web_port = find_free_port(web_port + 1)
+        changed = True
+
+    if not changed:
+        print('Ports are free, no updates required.')
+        return
+
+    replace_in_file(Path(PORT_FILES['settings_http'][0]), PORT_FILES['settings_http'][1], f'rfc_port_http={http_port}')
+    replace_in_file(Path(PORT_FILES['settings_ssh'][0]), PORT_FILES['settings_ssh'][1], f'rfc_port_ssh={ssh_port}')
+    replace_in_file(Path(PORT_FILES['agent_http'][0]), PORT_FILES['agent_http'][1], f'"80/tcp": {http_port}')
+    replace_in_file(Path(PORT_FILES['agent_ssh'][0]), PORT_FILES['agent_ssh'][1], f'"22/tcp": {ssh_port}')
+    replace_in_file(Path(PORT_FILES['agent_ssh_port'][0]), PORT_FILES['agent_ssh_port'][1], f'code_exec_ssh_port: int = {ssh_port}')
+    replace_in_file(Path(PORT_FILES['compose_web'][0]), PORT_FILES['compose_web'][1], f'{web_port}:80"')
+    replace_in_file(Path(PORT_FILES['compose_cuda_web'][0]), PORT_FILES['compose_cuda_web'][1], f'{web_port}:80"')
+
+    print(f'Updated ports -> HTTP: {http_port}, SSH: {ssh_port}, Web: {web_port}')
+
+
+if __name__ == '__main__':
+    main()

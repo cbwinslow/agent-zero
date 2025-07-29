@@ -4,6 +4,7 @@ To begin with Agent Zero, follow the links below for detailed guides on various 
 
 - **[Installation](installation.md):** Set up (or [update](installation.md#how-to-update-agent-zero)) Agent Zero on your system.
 - **[Usage Guide](usage.md):** Explore GUI features and usage scenarios.
+- **[Features & Workflows](features_workflows.md):** Overview of key capabilities and deployment steps.
 - **[Architecture Overview](architecture.md):** Understand the internal workings of the framework.
 - **[Contributing](contribution.md):** Learn how to contribute to the Agent Zero project.
 - **[Troubleshooting and FAQ](troubleshooting.md):** Find answers to common issues and questions.
@@ -40,6 +41,7 @@ To begin with Agent Zero, follow the links below for detailed guides on various 
   - [Voice Interface](usage.md#voice-interface)
   - [Mathematical Expressions](usage.md#mathematical-expressions)
   - [File Browser](usage.md#file-browser)
+  - [Backup & Restore](usage.md#backup--restore)
 - [Architecture Overview](architecture.md)
   - [System Architecture](architecture.md#system-architecture)
   - [Runtime Architecture](architecture.md#runtime-architecture)
