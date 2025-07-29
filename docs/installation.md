@@ -272,6 +272,31 @@ Once you've downloaded some models, you might want to check which ones you have 
 
 - Experiment with different model combinations to find the balance of performance and cost that best suits your needs. E.g., faster and lower latency LLMs will help, and you can also use `faiss_gpu` instead of `faiss_cpu` for the memory.
 
+## Installing and Using LocalAI
+LocalAI provides an OpenAI-compatible API for running models on your own hardware.
+
+### Installation
+1. Download a release from the [LocalAI GitHub repository](https://github.com/go-skynet/LocalAI).
+2. Extract the binary and start it with `./local-ai` (defaults to port `8080`).
+3. Optionally configure ports and model directories with `--config`.
+
+### Selecting LocalAI within Agent Zero
+1. Open the Settings page in the Web UI.
+2. Choose **LocalAI** as the provider for chat or embedding models.
+3. Enter the URL such as `http://localhost:8080/v1` and specify the model name.
+4. Click **Save**.
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant AZ as Agent Zero
+    participant L as LocalAI
+    U->>AZ: Chat request
+    AZ->>L: OpenAI API call
+    L-->>AZ: Response
+    AZ-->>U: Result
+```
+
 ## Using Agent Zero on your mobile device
 Agent Zero's Web UI is accessible from any device on your network through the Docker container:
 
@@ -526,6 +551,7 @@ Now we can configure Agent Zero - select models, settings, API Keys etc. Refer t
 
 ## 7. Configure Agent Zero RFC
 Agent Zero needs to be configured further to redirect some functions to the Docker container. This is crucial for development as A0 needs to run in a standardized environment to support all features.
+Before proceeding, add a value for `RFC_PASSWORD` in your `.env` file.  This password must match between your local and Docker instances and is required for remote function calls.
 1. Go in "Settings" page in the Web UI of your local instance and go in the "Development" section.
 2. Set "RFC Destination URL" to `http://localhost`
 3. Set the two ports (HTTP and SSH) to the ones used when creating the Docker container

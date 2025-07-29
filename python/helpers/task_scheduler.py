@@ -614,6 +614,10 @@ class TaskScheduler:
             self._tasks = SchedulerTaskList.get()
             self._printer = PrintStyle(italic=True, font_color="green", padding=False)
             self._initialized = True
+            # ensure self-learning and self-improvement tasks exist
+            asyncio.run(self.ensure_auto_learn_task())
+            asyncio.run(self.ensure_auto_seek_task())
+            asyncio.run(self.ensure_verify_task())
 
     async def reload(self):
         await self._tasks.reload()
@@ -722,6 +726,65 @@ class TaskScheduler:
         # Save the context
         save_tmp_chat(context)
         return context
+
+    async def ensure_auto_learn_task(self):
+        """Ensure a periodic self-learning task exists."""
+        if self.get_task_by_name("Self Learning"):
+            return
+        system_prompt = read_file(get_abs_path("prompts/default", "agent.system.main.md"))
+        schedule = TaskSchedule(minute="0", hour="*/12", day="*", month="*", weekday="*")
+        prompt = (
+            "Research a new topic from the internet, summarize your findings, "
+            "and store the summary in memory using the memory_save tool."
+        )
+        task = ScheduledTask.create(
+            name="Self Learning",
+            system_prompt=system_prompt,
+            prompt=prompt,
+            schedule=schedule,
+            context_id=None,
+        )
+        await self.add_task(task)
+
+    async def ensure_auto_seek_task(self):
+        """Ensure a periodic knowledge seeking task exists."""
+        if self.get_task_by_name("Knowledge Seek"):
+            return
+        system_prompt = read_file(get_abs_path("prompts/default", "agent.system.main.md"))
+        schedule = TaskSchedule(minute="15", hour="3", day="*", month="*", weekday="*")
+        prompt = (
+            "Look for new files in the 'knowledge/custom/new' directory. "
+            "Read each file, store key excerpts in memory using the memory_save tool, "
+            "and then move the file to a 'processed' subfolder."
+        )
+        task = ScheduledTask.create(
+            name="Knowledge Seek",
+            system_prompt=system_prompt,
+            prompt=prompt,
+            schedule=schedule,
+            context_id=None,
+        )
+        await self.add_task(task)
+
+    async def ensure_verify_task(self):
+        """Ensure a periodic knowledge verification task exists."""
+        if self.get_task_by_name("Verify Knowledge"):
+            return
+        system_prompt = read_file(get_abs_path("prompts/default", "agent.system.main.md"))
+        schedule = TaskSchedule(minute="30", hour="4", day="*", month="*", weekday="*")
+        prompt = (
+            "Select a random memory entry and verify it using the knowledge tool. "
+            "Assign a confidence score from 0 to 1 based on supporting evidence "
+            "and save a verification note with the score using the memory_save tool."
+        )
+        task = ScheduledTask.create(
+            name="Verify Knowledge",
+            system_prompt=system_prompt,
+            prompt=prompt,
+            schedule=schedule,
+            context_id=None,
+        )
+        await self.add_task(task)
 
     async def _get_chat_context(self, task: Union[ScheduledTask, AdHocTask, PlannedTask]) -> AgentContext:
         context = AgentContext.get(task.context_id) if task.context_id else None

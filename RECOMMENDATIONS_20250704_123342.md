@@ -1,0 +1,3 @@
+- Consider adding automated dependency checks so tests do not fail if packages are missing.
+- Provide Docker-based integration tests to validate LocalAI support end to end.
+- Expand the documentation with real screenshots for LocalAI setup.

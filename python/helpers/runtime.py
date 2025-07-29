@@ -91,7 +91,9 @@ async def handle_rfc(rfc_call: rfc.RFCCall):
 def _get_rfc_password() -> str:
     password = dotenv.get_dotenv_value(dotenv.KEY_RFC_PASSWORD)
     if not password:
-        raise Exception("No RFC password, cannot handle RFC calls.")
+        raise Exception(
+            "RFC password not set. Set RFC_PASSWORD in your .env or through the settings page to enable remote function calls."
+        )
     return password
 
 

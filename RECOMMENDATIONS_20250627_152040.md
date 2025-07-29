@@ -1,0 +1,3 @@
+- Consider parameterizing OAuth provider settings for easier customization.
+- Automate installation of oauth2-proxy in future setup scripts.
+- Evaluate using infrastructure-as-code (e.g. Terraform) to manage Cloudflare tunnel and DNS records.

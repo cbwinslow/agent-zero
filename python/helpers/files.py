@@ -1,25 +1,84 @@
+from abc import ABC, abstractmethod
 from fnmatch import fnmatch
 import json
-import os, re
-import base64
-
+import os
+import sys
 import re
+import base64
 import shutil
 import tempfile
+from typing import Any
 import zipfile
+import importlib
+import importlib.util
+import inspect
+from python.helpers.print_style import PrintStyle
+
+
+class VariablesPlugin(ABC):
+    @abstractmethod
+    def get_variables(self) -> dict[str, Any]:  # type: ignore
+        pass
+
+
+def load_plugin_variables(file: str, backup_dirs: list[str] | None = None) -> dict[str, Any]:
+    if not file.endswith(".md"):
+        return {}
+
+    if backup_dirs is None:
+        backup_dirs = []
+
+    try:
+        plugin_file = find_file_in_dirs(
+            get_abs_path(dirname(file), basename(file, ".md") + ".py"),
+            backup_dirs
+        )
+    except FileNotFoundError:
+        plugin_file = None
+
+    if plugin_file and exists(plugin_file):
+        # load python code and extract variables variables from it
+        module = None
+        module_name = dirname(plugin_file).replace("/", ".") + "." + basename(plugin_file, '.py')
+        try:
+            spec = importlib.util.spec_from_file_location(module_name, plugin_file)
+            if not spec:
+                return {}
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module
+            spec.loader.exec_module(module)  # type: ignore
+        except ImportError:
+            return {}
+
+        if module is None:
+            return {}
+
+        # Get all classes in the module
+        class_list = inspect.getmembers(module, inspect.isclass)
+        # Filter for classes that are subclasses of VariablesPlugin
+        # iterate backwards to skip imported superclasses
+        for cls in reversed(class_list):
+            if cls[1] is not VariablesPlugin and issubclass(cls[1], VariablesPlugin):
+                PrintStyle().debug(f"Loading prompt variables from {plugin_file}")
+                return cls[1]().get_variables()  # type: ignore
+    return {}
+
+from python.helpers.strings import sanitize_string
 
 
 def parse_file(_relative_path, _backup_dirs=None, _encoding="utf-8", **kwargs):
     content = read_file(_relative_path, _backup_dirs, _encoding)
     is_json = is_full_json_template(content)
     content = remove_code_fences(content)
+    variables = load_plugin_variables(_relative_path, _backup_dirs) or {}  # type: ignore
+    variables.update(kwargs)
     if is_json:
-        content = replace_placeholders_json(content, **kwargs)
+        content = replace_placeholders_json(content, **variables)
         obj = json.loads(content)
-        # obj = replace_placeholders_dict(obj, **kwargs)
+        # obj = replace_placeholders_dict(obj, **variables)
         return obj
     else:
-        content = replace_placeholders_text(content, **kwargs)
+        content = replace_placeholders_text(content, **variables)
         return content
 
 
@@ -35,11 +94,15 @@ def read_file(_relative_path, _backup_dirs=None, _encoding="utf-8", **kwargs):
         # content = remove_code_fences(f.read())
         content = f.read()
 
+    variables = load_plugin_variables(_relative_path, _backup_dirs) or {}  # type: ignore
+    variables.update(kwargs)
+
     # Replace placeholders with values from kwargs
-    content = replace_placeholders_text(content, **kwargs)
+    content = replace_placeholders_text(content, **variables)
 
     # Process include statements
     content = process_includes(
+        # here we use kwargs, the plugin variables are not inherited
         content, os.path.dirname(_relative_path), _backup_dirs, **kwargs
     )
 
@@ -69,7 +132,7 @@ def read_file_base64(_relative_path, _backup_dirs=None):
 
     # read binary content and encode to base64
     with open(absolute_path, "rb") as f:
-        return base64.b64encode(f.read()).decode('utf-8')
+        return base64.b64encode(f.read()).decode("utf-8")
 
 
 def replace_placeholders_text(_content: str, **kwargs):
@@ -160,9 +223,6 @@ def find_file_in_dirs(file_path, backup_dirs):
     )
 
 
-import re
-
-
 def remove_code_fences(text):
     # Pattern to match code fences with optional language specifier
     pattern = r"(```|~~~)(.*?\n)(.*?)(\1)"
@@ -177,9 +237,6 @@ def remove_code_fences(text):
     return result
 
 
-import re
-
-
 def is_full_json_template(text):
     # Pattern to match the entire text enclosed in ```json or ~~~json fences
     pattern = r"^\s*(```|~~~)\s*json\s*\n(.*?)\n\1\s*$"
@@ -191,6 +248,7 @@ def is_full_json_template(text):
 def write_file(relative_path: str, content: str, encoding: str = "utf-8"):
     abs_path = get_abs_path(relative_path)
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    content = sanitize_string(content, encoding)
     with open(abs_path, "w", encoding=encoding) as f:
         f.write(content)
 
@@ -211,16 +269,30 @@ def write_file_base64(relative_path: str, content: str):
         f.write(data)
 
 
-def delete_file(relative_path: str):
-    abs_path = get_abs_path(relative_path)
-    if os.path.exists(abs_path):
-        os.remove(abs_path)
-
-
 def delete_dir(relative_path: str):
+    # ensure deletion of directory without propagating errors
     abs_path = get_abs_path(relative_path)
     if os.path.exists(abs_path):
-        shutil.rmtree(abs_path)
+        # first try with ignore_errors=True which is the safest option
+        shutil.rmtree(abs_path, ignore_errors=True)
+
+        # if directory still exists, try more aggressive methods
+        if os.path.exists(abs_path):
+            try:
+                # try to change permissions and delete again
+                for root, dirs, files in os.walk(abs_path, topdown=False):
+                    for name in files:
+                        file_path = os.path.join(root, name)
+                        os.chmod(file_path, 0o777)
+                    for name in dirs:
+                        dir_path = os.path.join(root, name)
+                        os.chmod(dir_path, 0o777)
+
+                # try again after changing permissions
+                shutil.rmtree(abs_path, ignore_errors=True)
+            except:
+                # suppress all errors - we're ensuring no errors propagate
+                pass
 
 
 def list_files(relative_path: str, filter: str = "*"):
@@ -236,8 +308,16 @@ def make_dirs(relative_path: str):
 
 
 def get_abs_path(*relative_paths):
+    "Convert relative paths to absolute paths based on the base directory."
     return os.path.join(get_base_dir(), *relative_paths)
 
+def fix_dev_path(path:str):
+    "On dev environment, convert /a0/... paths to local absolute paths"
+    from python.helpers.runtime import is_development
+    if is_development():
+        if path.startswith("/a0/"):
+            path = path.replace("/a0/", "")
+    return get_abs_path(path)
 
 def exists(*relative_paths):
     path = get_abs_path(*relative_paths)
@@ -249,6 +329,17 @@ def get_base_dir():
     base_dir = os.path.dirname(os.path.abspath(os.path.join(__file__, "../../")))
     return base_dir
 
+
+def basename(path: str, suffix: str | None = None):
+    if suffix:
+        return os.path.basename(path).removesuffix(suffix)
+    return os.path.basename(path)
+
+
+def dirname(path: str):
+    return os.path.dirname(path)
+
+
 def is_in_base_dir(path: str):
     # check if the given path is within the base directory
     base_dir = get_base_dir()
@@ -258,7 +349,11 @@ def is_in_base_dir(path: str):
     return os.path.commonpath([abs_path, base_dir]) == base_dir
 
 
-def get_subdirectories(relative_path: str, include: str | list[str] = "*", exclude: str | list[str] | None = None):
+def get_subdirectories(
+    relative_path: str,
+    include: str | list[str] = "*",
+    exclude: str | list[str] | None = None,
+):
     abs_path = get_abs_path(relative_path)
     if not os.path.exists(abs_path):
         return []
@@ -294,7 +389,7 @@ def move_file(relative_path: str, new_path: str):
     os.makedirs(os.path.dirname(new_abs_path), exist_ok=True)
     os.rename(abs_path, new_abs_path)
 
-def safe_file_name(filename:str)-> str:
+
+def safe_file_name(filename: str) -> str:
     # Replace any character that's not alphanumeric, dash, underscore, or dot with underscore
-    import re
     return re.sub(r'[^a-zA-Z0-9-._]', '_', filename)
