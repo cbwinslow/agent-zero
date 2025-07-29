@@ -7,7 +7,7 @@ log_info() {
     echo "[INFO] $1"
 }
 
-# log_error prints an error message to standard error with an [ERROR] prefix.
+
 log_error() {
     echo "[ERROR] $1" >&2
 }

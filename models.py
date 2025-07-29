@@ -225,13 +225,7 @@ def get_localai_embedding(
     **kwargs,
 ):
     """
-    Return an OpenAIEmbeddings instance configured for a LocalAI embedding model.
-    
-    Parameters:
-        model_name (str): The name of the embedding model to use.
-    
-    Returns:
-        OpenAIEmbeddings: An embedding model instance configured for LocalAI.
+
     """
     if not base_url:
         base_url = get_localai_base_url()
@@ -249,7 +243,7 @@ def get_localai_embedding(
 # AnythingLLM and other OpenAI compatible interfaces
 def get_anythingllm_base_url():
     """
-    Return the base URL for the AnythingLLM API, using the environment variable if set or defaulting to the local server URL.
+
     """
     return (
         dotenv.get_dotenv_value("ANYTHINGLLM_BASE_URL")
@@ -264,13 +258,7 @@ def get_anythingllm_chat(
     **kwargs,
 ):
     """
-    Return a ChatOpenAI instance configured for the AnythingLLM provider.
-    
-    Parameters:
-        model_name (str): The name of the chat model to use.
-    
-    Returns:
-        ChatOpenAI: An instance configured with the specified model, base URL, and API key for AnythingLLM.
+
     """
     if not base_url:
         base_url = get_anythingllm_base_url()
@@ -286,13 +274,12 @@ def get_anythingllm_embedding(
     **kwargs,
 ):
     """
-    Return an OpenAIEmbeddings instance configured for the AnythingLLM provider.
+
     
     Parameters:
         model_name (str): The name of the embedding model to use.
     
-    Returns:
-        OpenAIEmbeddings: An embedding model instance set up with the specified model name, API key, and base URL for AnythingLLM.
+
     """
     if not base_url:
         base_url = get_anythingllm_base_url()
@@ -303,9 +290,8 @@ def get_anythingllm_embedding(
 
 # TogetherAI and other OpenAI compatible interfaces
 def get_togetherai_base_url():
-    """
-    Return the TogetherAI API base URL from environment variables or use the default TogetherAI endpoint.
-    """
+
+    
     return (
         dotenv.get_dotenv_value("TOGETHERAI_BASE_URL")
         or "https://api.together.ai/v1"
@@ -319,9 +305,7 @@ def get_togetherai_chat(
     **kwargs,
 ):
     """
-    Return a ChatOpenAI instance configured for TogetherAI with the specified model, base URL, and API key.
-    
-    If base URL or API key are not provided, they are retrieved from environment variables or set to defaults.
+
     """
     if not base_url:
         base_url = get_togetherai_base_url()
@@ -337,9 +321,7 @@ def get_togetherai_embedding(
     **kwargs,
 ):
     """
-    Return an OpenAIEmbeddings instance configured for TogetherAI with the specified model, API key, and base URL.
-    
-    If no base URL or API key is provided, defaults are retrieved from environment variables or preset values.
+
     """
     if not base_url:
         base_url = get_togetherai_base_url()
@@ -356,9 +338,7 @@ def get_grok_chat(
     **kwargs,
 ):
     """
-    Return a ChatOpenAI instance configured for the Grok API with the specified model.
-    
-    If no API key or base URL is provided, retrieves them from environment variables or uses Grok defaults.
+
     """
     if not api_key:
         api_key = get_api_key("grok")
@@ -374,9 +354,7 @@ def get_grok_embedding(
     **kwargs,
 ):
     """
-    Return an OpenAI-compatible embedding model instance configured for the Grok API.
-    
-    If not provided, the API key and base URL are retrieved from environment variables or set to Grok defaults.
+
     """
     if not api_key:
         api_key = get_api_key("grok")
@@ -393,9 +371,7 @@ def get_anthropic_chat(
     **kwargs,
 ):
     """
-    Return a ChatAnthropic instance configured for the specified model, using the provided or environment-derived API key and base URL.
-    
-    If no API key or base URL is given, values are retrieved from environment variables or set to Anthropic defaults.
+
     """
     if not api_key:
         api_key = get_api_key("anthropic")
