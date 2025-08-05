@@ -162,7 +162,7 @@ remote function calls are triggered.
 ## Coming soon
 
 - **MCP**
-- Multi-Agent Development Framework for advanced project orchestration (see `framework/` directory).
+- Multi-Agent Development Framework for advanced project orchestration (see `framework/` directory). Includes templates for data analysis and code review agents.
 - **Knowledge and RAG Tools**
 
 ## 🎯 Changelog

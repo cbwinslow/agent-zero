@@ -224,6 +224,9 @@ def get_localai_embedding(
     api_key=None,
     **kwargs,
 ):
+    """
+
+    """
     if not base_url:
         base_url = get_localai_base_url()
     if not api_key:
@@ -239,6 +242,9 @@ def get_localai_embedding(
 
 # AnythingLLM and other OpenAI compatible interfaces
 def get_anythingllm_base_url():
+    """
+
+    """
     return (
         dotenv.get_dotenv_value("ANYTHINGLLM_BASE_URL")
         or f"http://{runtime.get_local_url()}:3001/v1"
@@ -251,6 +257,9 @@ def get_anythingllm_chat(
     api_key=None,
     **kwargs,
 ):
+    """
+
+    """
     if not base_url:
         base_url = get_anythingllm_base_url()
     if not api_key:
@@ -264,6 +273,14 @@ def get_anythingllm_embedding(
     api_key=None,
     **kwargs,
 ):
+    """
+
+    
+    Parameters:
+        model_name (str): The name of the embedding model to use.
+    
+
+    """
     if not base_url:
         base_url = get_anythingllm_base_url()
     if not api_key:
@@ -273,6 +290,8 @@ def get_anythingllm_embedding(
 
 # TogetherAI and other OpenAI compatible interfaces
 def get_togetherai_base_url():
+
+    
     return (
         dotenv.get_dotenv_value("TOGETHERAI_BASE_URL")
         or "https://api.together.ai/v1"
@@ -285,6 +304,9 @@ def get_togetherai_chat(
     api_key=None,
     **kwargs,
 ):
+    """
+
+    """
     if not base_url:
         base_url = get_togetherai_base_url()
     if not api_key:
@@ -298,6 +320,9 @@ def get_togetherai_embedding(
     api_key=None,
     **kwargs,
 ):
+    """
+
+    """
     if not base_url:
         base_url = get_togetherai_base_url()
     if not api_key:
@@ -312,6 +337,9 @@ def get_grok_chat(
     base_url=None,
     **kwargs,
 ):
+    """
+
+    """
     if not api_key:
         api_key = get_api_key("grok")
     if not base_url:
@@ -325,6 +353,9 @@ def get_grok_embedding(
     base_url=None,
     **kwargs,
 ):
+    """
+
+    """
     if not api_key:
         api_key = get_api_key("grok")
     if not base_url:
@@ -339,6 +370,9 @@ def get_anthropic_chat(
     base_url=None,
     **kwargs,
 ):
+    """
+
+    """
     if not api_key:
         api_key = get_api_key("anthropic")
     if not base_url:

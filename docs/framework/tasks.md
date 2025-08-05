@@ -6,3 +6,4 @@
 4. Integrate with open source providers (Ollama, OpenRouter) for LLM access.
 5. Build tooling scripts for Docker-based deployment of generated applications.
 6. Document usage examples and command line entry points.
+7. Expand the agent library with data analysis and code review specialists.
