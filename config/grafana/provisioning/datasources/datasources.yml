@@ -1,0 +1,43 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      maxLines: 1000
+
+  - name: OpenSearch
+    type: grafana-opensearch-datasource
+    access: proxy
+    url: http://opensearch:9200
+    editable: true
+    jsonData:
+      database: ""
+      timeField: "@timestamp"
+      version: "2.0.0"
+      flavor: opensearch
+
+  - name: PostgreSQL
+    type: postgres
+    url: postgres:5432
+    database: litellm
+    user: litellm
+    editable: true
+    secureJsonData:
+      password: litellm
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false

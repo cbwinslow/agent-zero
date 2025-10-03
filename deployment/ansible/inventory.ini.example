@@ -1,0 +1,33 @@
+# Ansible Inventory for Agent Zero Deployment
+# Copy this file and customize for your environment
+
+[agent_zero_servers]
+# Single server deployment
+# production-server ansible_host=192.168.1.100 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+# Multi-server deployment (for load balancing)
+# agent-zero-1 ansible_host=192.168.1.101 ansible_user=ubuntu
+# agent-zero-2 ansible_host=192.168.1.102 ansible_user=ubuntu
+# agent-zero-3 ansible_host=192.168.1.103 ansible_user=ubuntu
+
+[agent_zero_servers:vars]
+# API Keys (can also be set via ansible-vault for security)
+# openai_api_key=your_openai_key_here
+# anthropic_api_key=your_anthropic_key_here
+
+# Service passwords
+grafana_password=changeme_secure_password
+postgres_password=changeme_secure_password
+rabbitmq_password=changeme_secure_password
+redis_password=changeme_secure_password
+
+# Network configuration
+agent_zero_domain=agent-zero.example.com
+
+# Monitoring configuration
+enable_monitoring=true
+enable_alerts=true
+
+# Resource limits
+max_memory=8G
+max_cpu_cores=4
