@@ -42,6 +42,19 @@ class EnhancedMemoryMetadata:
     related_memory_ids: List[str] = field(default_factory=list)
     
     def to_dict(self) -> Dict:
+        """
+        Serialize the metadata into a JSON-serializable dictionary.
+        
+        Returns:
+            dict: Mapping with keys:
+                - "importance": integer value of the MemoryImportance enum.
+                - "access_count": integer access counter.
+                - "last_accessed": ISO 8601 timestamp string or `None`.
+                - "created_at": ISO 8601 timestamp string or `None`.
+                - "tags": list of tag strings.
+                - "context": context string.
+                - "related_memory_ids": list of related memory ID strings.
+        """
         return {
             "importance": self.importance.value,
             "access_count": self.access_count,
@@ -54,6 +67,17 @@ class EnhancedMemoryMetadata:
     
     @staticmethod
     def from_dict(data: Dict) -> 'EnhancedMemoryMetadata':
+        """
+        Create an EnhancedMemoryMetadata instance from a dictionary produced by `to_dict`.
+        
+        Parameters:
+            data (Dict): Dictionary with keys matching EnhancedMemoryMetadata fields. Expected keys include
+                "importance" (int or enum value), "access_count" (int), "last_accessed" (ISO 8601 string or None),
+                "created_at" (ISO 8601 string), "tags" (list of str), "context" (str), and "related_memory_ids" (list of str).
+        
+        Returns:
+            EnhancedMemoryMetadata: The reconstructed metadata object with enums and datetimes parsed from the input.
+        """
         return EnhancedMemoryMetadata(
             importance=MemoryImportance(data.get("importance", 3)),
             access_count=data.get("access_count", 0),
@@ -69,6 +93,15 @@ class EnhancedMemory:
     """Enhanced memory system with improved retrieval and management"""
     
     def __init__(self, base_memory: BaseMemory):
+        """
+        Initialize the EnhancedMemory wrapper using a BaseMemory backend and load persisted enhanced metadata.
+        
+        Parameters:
+            base_memory (BaseMemory): The underlying memory backend whose agent, database, and memory_subdir will be used by this enhanced memory instance.
+        
+        Description:
+            Stores a reference to the provided base_memory, exposes its agent, db, and memory_subdir on the instance, initializes the internal enhanced metadata store, and loads any existing metadata from persistent storage.
+        """
         self.base_memory = base_memory
         self.agent = base_memory.agent
         self.db = base_memory.db
@@ -79,7 +112,11 @@ class EnhancedMemory:
         self._load_metadata()
     
     def _load_metadata(self):
-        """Load enhanced metadata for existing memories"""
+        """
+        Load enhanced memory metadata from memory/{memory_subdir}/enhanced_metadata.json into the instance metadata store.
+        
+        If the metadata file exists, parse its JSON contents and populate self._memory_metadata with EnhancedMemoryMetadata instances keyed by document ID.
+        """
         # Load from storage if exists
         from python.helpers import files
         metadata_file = files.get_abs_path(f"memory/{self.memory_subdir}/enhanced_metadata.json")
@@ -94,7 +131,13 @@ class EnhancedMemory:
                 }
     
     def _save_metadata(self):
-        """Save enhanced metadata"""
+        """
+        Persist enhanced memory metadata to disk as JSON.
+        
+        Writes the instance's internal `_memory_metadata` mapping to
+        memory/{memory_subdir}/enhanced_metadata.json, serializing each
+        EnhancedMemoryMetadata via its `to_dict()` representation.
+        """
         from python.helpers import files
         import json
         
@@ -108,7 +151,16 @@ class EnhancedMemory:
             json.dump(data, f, indent=2)
     
     def calculate_temporal_weight(self, created_at: datetime, decay_days: int = 30) -> float:
-        """Calculate temporal weight for memory (recent memories score higher)"""
+        """
+        Compute a temporal relevance weight so more recent memories score higher.
+        
+        Parameters:
+            created_at (datetime): Timestamp when the memory was created.
+            decay_days (int): Characteristic decay period in days; larger values slow the decay (default 30).
+        
+        Returns:
+            float: A weight between 0.1 and 1.0 representing temporal relevance (`1.0` for very recent, approaching `0.1` for old entries).
+        """
         now = datetime.now()
         age_days = (now - created_at).days
         
@@ -117,11 +169,27 @@ class EnhancedMemory:
         return max(0.1, weight)  # Minimum weight 0.1
     
     def calculate_importance_weight(self, importance: MemoryImportance) -> float:
-        """Calculate importance weight"""
+        """
+        Map a MemoryImportance level to a normalized weight between 0.2 and 1.0.
+        
+        The importance's numeric value is divided by 5.0 so that MemoryImportance.CRITICAL maps to 1.0 and MemoryImportance.TRIVIAL maps to 0.2.
+        
+        Returns:
+            float: Weight in the range [0.2, 1.0] corresponding to the provided importance.
+        """
         return importance.value / 5.0
     
     def calculate_access_weight(self, access_count: int, max_access: int = 100) -> float:
-        """Calculate access frequency weight"""
+        """
+        Compute a normalized weight that reflects how frequently a memory has been accessed.
+        
+        Parameters:
+            access_count (int): Number of times the memory has been accessed.
+            max_access (int): Access count at which the weight saturates to its maximum.
+        
+        Returns:
+            float: A weight greater than 0 and at most 1.0 that increases with access_count and is capped at 1.0.
+        """
         return min(1.0, (access_count + 1) / max_access)
     
     async def search_enhanced(
@@ -217,7 +285,20 @@ class EnhancedMemory:
         context: str = "",
         metadata: Optional[Dict] = None
     ) -> str:
-        """Add memory with enhanced metadata"""
+        """
+        Add a new memory entry to the base memory and record enhanced metadata for it.
+        
+        Parameters:
+            text (str): The content to store as the memory.
+            area (BaseMemory.Area): The memory area/namespace to store the document in.
+            importance (MemoryImportance): The significance level assigned to the memory.
+            tags (Optional[List[str]]): Tags to attach to the memory for later filtering.
+            context (str): Optional contextual note or short description for the memory.
+            metadata (Optional[Dict]): Additional document metadata to persist with the stored document; a timestamp and area will be added automatically.
+        
+        Returns:
+            str: The ID of the created document if successful, or an empty string on failure.
+        """
         # Create document
         doc_metadata = metadata or {}
         doc_metadata["timestamp"] = datetime.now().isoformat()
@@ -254,9 +335,17 @@ class EnhancedMemory:
         max_age_days: int = 7
     ) -> int:
         """
-        Consolidate similar recent memories to reduce redundancy
+        Attempt to consolidate similar memories created within the past `max_age_days` to reduce redundancy.
         
-        Returns number of memories consolidated
+        Compares recent memories in the specified `area` using a pairwise similarity check governed by `min_similarity` and merges or marks redundant items when detected. The current implementation is a scaffold: it iterates recent memory pairs but does not perform actual similarity comparison or merging, and therefore will always return 0 until consolidation logic is implemented.
+        
+        Parameters:
+            area (BaseMemory.Area): Memory area to consider for consolidation.
+            min_similarity (float): Similarity threshold in [0, 1] used to decide whether two memories are similar enough to consolidate.
+            max_age_days (int): Only memories created within this many days from now are considered.
+        
+        Returns:
+            int: Number of memories consolidated (currently always 0 until consolidation is implemented).
         """
         # Get recent memories
         cutoff_date = datetime.now() - timedelta(days=max_age_days)
@@ -290,7 +379,20 @@ class EnhancedMemory:
         return consolidated
     
     def get_memory_statistics(self) -> Dict:
-        """Get statistics about memory usage"""
+        """
+        Return aggregated statistics about the stored enhanced memories.
+        
+        Provides counts and summaries useful for analytics and monitoring:
+        - total_memories: total number of tracked memories.
+        - importance_distribution: mapping of importance level name to count.
+        - total_accesses: sum of all memory access counts.
+        - average_accesses: mean access count per memory (0 if none).
+        - age_distribution: counts of memories created "today", "this_week" (<=7 days), "this_month" (<=30 days), and "older" (>30 days).
+        - memory_subdir: the subdirectory name where memory data is stored.
+        
+        Returns:
+            Dict: A dictionary containing the statistics described above.
+        """
         total_memories = len(self._memory_metadata)
         
         importance_counts = {
@@ -331,26 +433,57 @@ class EnhancedMemory:
         }
     
     def tag_memory(self, doc_id: str, tags: List[str]):
-        """Add tags to a memory"""
+        """
+        Append tags to an existing memory's tag list.
+        
+        If the given memory ID does not exist, the function does nothing.
+        
+        Parameters:
+            doc_id (str): The identifier of the memory to tag.
+            tags (List[str]): Tags to append to the memory's existing tags.
+        """
         if doc_id in self._memory_metadata:
             self._memory_metadata[doc_id].tags.extend(tags)
             self._save_metadata()
     
     def set_importance(self, doc_id: str, importance: MemoryImportance):
-        """Set importance level for a memory"""
+        """
+        Set the importance level for a stored memory.
+        
+        Parameters:
+            doc_id (str): ID of the memory to update.
+            importance (MemoryImportance): New importance level to assign to the memory.
+        """
         if doc_id in self._memory_metadata:
             self._memory_metadata[doc_id].importance = importance
             self._save_metadata()
     
     def get_memories_by_tag(self, tags: List[str]) -> List[str]:
-        """Get memory IDs by tags"""
+        """
+        Retrieve IDs of memories that have any of the specified tags.
+        
+        Parameters:
+        	tags (List[str]): Tags to match against each memory's tag list. A memory is selected if it contains at least one of these tags.
+        
+        Returns:
+        	List[str]: List of memory IDs whose tags intersect with the provided tags (empty if no matches).
+        """
         return [
             doc_id for doc_id, meta in self._memory_metadata.items()
             if any(tag in meta.tags for tag in tags)
         ]
     
     def get_related_memories(self, doc_id: str, max_depth: int = 2) -> List[str]:
-        """Get related memories recursively"""
+        """
+        Retrieve memory IDs related to a given memory by traversing related links up to a specified depth.
+        
+        Parameters:
+            doc_id (str): The starting memory ID to find related memories for.
+            max_depth (int): Maximum number of hops to follow through related_memory_ids (default 2).
+        
+        Returns:
+            List of related memory IDs reachable within max_depth hops; returns an empty list if the starting ID is not tracked.
+        """
         if doc_id not in self._memory_metadata:
             return []
         
