@@ -5,6 +5,7 @@ import tempfile
 import asyncio
 from python.helpers import runtime, rfc, settings, files
 from python.helpers.print_style import PrintStyle
+from python.helpers.notification import NotificationManager, NotificationType, NotificationPriority
 
 # Suppress FutureWarning from torch.load
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -30,9 +31,21 @@ async def _preload(model_name:str):
     try:
         is_updating_model = True
         if not _model or _model_name != model_name:
-                PrintStyle.standard(f"Loading Whisper model: {model_name}")
-                _model = whisper.load_model(name=model_name, download_root=files.get_abs_path("/tmp/models/whisper")) # type: ignore
-                _model_name = model_name
+            NotificationManager.send_notification(
+                NotificationType.INFO,
+                NotificationPriority.NORMAL,
+                "Loading Whisper model...",
+                display_time=99,
+                group="whisper-preload")
+            PrintStyle.standard(f"Loading Whisper model: {model_name}")
+            _model = whisper.load_model(name=model_name, download_root=files.get_abs_path("/tmp/models/whisper")) # type: ignore
+            _model_name = model_name
+            NotificationManager.send_notification(
+                NotificationType.INFO,
+                NotificationPriority.NORMAL,
+                "Whisper model loaded.",
+                display_time=2,
+                group="whisper-preload")
     finally:
         is_updating_model = False
 
@@ -68,9 +81,16 @@ async def _transcribe(model_name:str, audio_bytes_b64: str):
     audio_bytes = base64.b64decode(audio_bytes_b64)
 
     # Create temp audio file
+    import os
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as audio_file:
         audio_file.write(audio_bytes)
-
-    # Transcribe the audio file
-    result = _model.transcribe(audio_file.name, fp16=False) # type: ignore
-    return result
+        temp_path = audio_file.name
+    try:
+        # Transcribe the audio file
+        result = _model.transcribe(temp_path, fp16=False) # type: ignore
+        return result
+    finally:
+        try:
+            os.remove(temp_path)
+        except Exception:
+            pass # ignore errors during cleanup

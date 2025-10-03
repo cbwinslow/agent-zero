@@ -3,13 +3,23 @@
 # `Agent Zero`
 
 
-[![Agent Zero Website](https://img.shields.io/badge/Website-agent--zero.ai-0A192F?style=for-the-badge&logo=vercel&logoColor=white)](https://agent-zero.ai) [![Thanks to Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Thanks%20to%20Sponsors-FF69B4?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/agent0ai) [![Follow on X](https://img.shields.io/badge/X-Follow-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/Agent0ai) [![Join our Discord](https://img.shields.io/badge/Discord-Join%20our%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/B8KZKNsPpj) [![Subscribe on YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@AgentZeroFW) [![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jan-tomasek/) [![Follow on Warpcast](https://img.shields.io/badge/Warpcast-Follow-5A32F3?style=for-the-badge)](https://warpcast.com/agent-zero)
+[![Agent Zero Website](https://img.shields.io/badge/Website-agent--zero.ai-0A192F?style=for-the-badge&logo=vercel&logoColor=white)](https://agent-zero.ai) [![Thanks to Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Thanks%20to%20Sponsors-FF69B4?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/agent0ai) [![Follow on X](https://img.shields.io/badge/X-Follow-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/Agent0ai) [![Join our Discord](https://img.shields.io/badge/Discord-Join%20our%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/B8KZKNsPpj) [![Subscribe on YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@AgentZeroFW) [![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jan-tomasek/) [![Follow on Warpcast](https://img.shields.io/badge/Warpcast-Follow-5A32F3?style=for-the-badge)](https://warpcast.com/agent-zero) 
+
+
+## Documentation:
 
 [Introduction](#a-personal-organic-agentic-framework-that-grows-and-learns-with-you) •
 [Installation](./docs/installation.md) •
+[Development](./docs/development.md) •
+[Extensibility](./docs/extensibility.md) •
+[Connectivity](./docs/connectivity.md) •
 [How to update](./docs/installation.md#how-to-update-agent-zero) •
 [Documentation](./docs/README.md) •
 [Usage](./docs/usage.md)
+
+Or see DeepWiki generated documentation:
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/agent0ai/agent-zero)
 
 </div>
 
@@ -54,7 +64,7 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - Agent Zero uses the operating system as a tool to accomplish its tasks. It has no single-purpose tools pre-programmed. Instead, it can write its own code and use the terminal to create and use its own tools as needed.
 - The only default tools in its arsenal are online search, memory features, communication (with the user and other agents), and code/terminal execution. Everything else is created by the agent itself or can be extended by the user.
 - Tool usage functionality has been developed from scratch to be the most compatible and reliable, even with very small models.
-- **Default Tools:** Agent Zero includes tools like knowledge, webpage content, code execution, and communication.
+- **Default Tools:** Agent Zero includes tools like knowledge, code execution, and communication.
 - **Creating Custom Tools:** Extend Agent Zero's functionality by creating your own custom tools.
 - **Instruments:** Instruments are a new type of tool that allow you to create custom functions and procedures that can be called by Agent Zero.
 
@@ -149,12 +159,69 @@ docker run -p 50001:80 agent0ai/agent-zero
 |-------|-------------|
 | [Installation](./docs/installation.md) | Installation, setup and configuration |
 | [Usage](./docs/usage.md) | Basic and advanced usage |
+| [Development](./docs/development.md) | Development and customization |
+| [Extensibility](./docs/extensibility.md) | Extending Agent Zero |
+| [Connectivity](./docs/connectivity.md) | External API endpoints, MCP server connections, A2A protocol |
 | [Architecture](./docs/architecture.md) | System design and components |
 | [Contributing](./docs/contribution.md) | How to contribute |
 | [Troubleshooting](./docs/troubleshooting.md) | Common issues and their solutions |
 
 
 ## 🎯 Changelog
+
+### v0.9.6 - Memory Dashboard
+[Release video](https://youtu.be/sizjAq2-d9s)
+- Memory Management Dashboard
+- Kali update
+- Python update + dual installation
+- Browser Use update
+- New login screen
+- LiteLLM retry on temporary errors
+- Github Copilot provider support
+
+
+### v0.9.5 - Secrets
+[Release video](https://www.youtube.com/watch?v=VqxUdt7pjd8)
+- Secrets management - agent can use credentials without seeing them
+- Agent can copy paste messages and files without rewriting them
+- LiteLLM global configuration field
+- Custom HTTP headers field for browser agent
+- Progressive web app support
+- Extra model params support for JSON
+- Short IDs for files and memories to prevent LLM errors
+- Tunnel component frontend rework
+- Fix for timezone change bug
+- Notifications z-index fix
+
+### v0.9.4 - Connectivity, UI
+[Release video](https://www.youtube.com/watch?v=C2BAdDOduIc)
+- External API endpoints
+- Streamable HTTP MCP A0 server
+- A2A (Agent to Agent) protocol - server+client
+- New notifications system
+- New local terminal interface for stability
+- Rate limiter integration to models
+- Delayed memory recall
+- Smarter autoscrolling in UI
+- Action buttons in messages
+- Multiple API keys support
+- Download streaming
+- Tunnel URL QR code
+- Internal fixes and optimizations
+
+### v0.9.3 - Subordinates, memory, providers Latest
+[Release video](https://www.youtube.com/watch?v=-LfejFWL34k)
+- Faster startup/restart
+- Subordinate agents can have dedicated prompts, tools and system extensions
+- Streamable HTTP MCP server support
+- Memory loading enhanced by AI filter
+- Memory AI consolidation when saving memories
+- Auto memory system configuration in settings
+- LLM providers available are set by providers.yaml configuration file
+- Venice.ai LLM provider supported
+- Initial agent message for user + as example for LLM
+- Docker build support for local images
+- File browser fix
 
 
 ### v0.9.2 - Kokoro TTS, Attachments
@@ -163,7 +230,6 @@ docker run -p 50001:80 agent0ai/agent-zero
 - Kokoro text-to-speech integration
 - New message attachments system
 - Minor updates: log truncation, hyperlink targets, component examples, api cleanup
-
 
 
 ### v0.9.1 - LiteLLM, UI improvements

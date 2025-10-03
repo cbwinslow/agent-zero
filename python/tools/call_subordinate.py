@@ -1,5 +1,7 @@
 from agent import Agent, UserMessage
 from python.helpers.tool import Tool, Response
+from initialize import initialize_agent
+from python.extensions.hist_add_tool_result import _90_save_tool_call_file as save_tool_call_file
 
 
 class Delegation(Tool):
@@ -10,28 +12,36 @@ class Delegation(Tool):
             self.agent.get_data(Agent.DATA_NAME_SUBORDINATE) is None
             or str(reset).lower().strip() == "true"
         ):
+            # initialize default config
+            config = initialize_agent()
+
+            # set subordinate prompt profile if provided, if not, keep original
+            agent_profile = kwargs.get("profile")
+            if agent_profile:
+                config.profile = agent_profile
+
             # crate agent
-            sub = Agent(self.agent.number + 1, self.agent.config, self.agent.context)
+            sub = Agent(self.agent.number + 1, config, self.agent.context)
             # register superior/subordinate
             sub.set_data(Agent.DATA_NAME_SUPERIOR, self.agent)
             self.agent.set_data(Agent.DATA_NAME_SUBORDINATE, sub)
-            # set default prompt profile to new agents
-            sub.config.prompts_subdir = "default"
 
         # add user message to subordinate agent
-        subordinate: Agent = self.agent.get_data(Agent.DATA_NAME_SUBORDINATE)
+        subordinate: Agent = self.agent.get_data(Agent.DATA_NAME_SUBORDINATE)  # type: ignore
         subordinate.hist_add_user_message(UserMessage(message=message, attachments=[]))
-
-        # set subordinate prompt profile if provided, if not, keep original
-        prompt_profile = kwargs.get("prompt_profile")
-        if prompt_profile:
-            subordinate.config.prompts_subdir = prompt_profile
 
         # run subordinate monologue
         result = await subordinate.monologue()
 
+        # hint to use includes for long responses
+        additional = None
+        if len(result) >= save_tool_call_file.LEN_MIN:
+            hint = self.agent.read_prompt("fw.hint.call_sub.md")
+            if hint:
+                additional = {"hint": hint}
+
         # result
-        return Response(message=result, break_loop=False)
+        return Response(message=result, break_loop=False, additional=additional)
 
     def get_log_object(self):
         return self.agent.context.log.log(

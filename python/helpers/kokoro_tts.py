@@ -7,8 +7,10 @@ import asyncio
 import soundfile as sf
 from python.helpers import runtime
 from python.helpers.print_style import PrintStyle
+from python.helpers.notification import NotificationManager, NotificationType, NotificationPriority
 
 warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 _pipeline = None
 _voice = "am_puck,am_onyx"
@@ -37,9 +39,21 @@ async def _preload():
     try:
         is_updating_model = True
         if not _pipeline:
+            NotificationManager.send_notification(
+                NotificationType.INFO,
+                NotificationPriority.NORMAL,
+                "Loading Kokoro TTS model...",
+                display_time=99,
+                group="kokoro-preload")
             PrintStyle.standard("Loading Kokoro TTS model...")
             from kokoro import KPipeline
-            _pipeline = KPipeline(lang_code="a")
+            _pipeline = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M")
+            NotificationManager.send_notification(
+                NotificationType.INFO,
+                NotificationPriority.NORMAL,
+                "Kokoro TTS model loaded.",
+                display_time=2,
+                group="kokoro-preload")
     finally:
         is_updating_model = False
 

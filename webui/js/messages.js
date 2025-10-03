@@ -1,38 +1,37 @@
-// copy button
+// message actions and components
 import { openImageModal } from "./image_modal.js";
 import { marked } from "../vendor/marked/marked.esm.js";
-import { getAutoScroll } from "/index.js";
 import { store as _messageResizeStore } from "/components/messages/resize/message-resize-store.js"; // keep here, required in html
 import { store as attachmentsStore } from "/components/chat/attachments/attachmentsStore.js";
+import { addActionButtonsToElement } from "/components/messages/action-buttons/simple-action-buttons.js";
 
 const chatHistory = document.getElementById("chat-history");
 
 let messageGroup = null;
 
+// Simplified implementation - no complex interactions needed
+
 export function setMessage(id, type, heading, content, temp, kvps = null) {
   // Search for the existing message container by id
   let messageContainer = document.getElementById(`message-${id}`);
+  let isNewMessage = false;
 
   if (messageContainer) {
-    // Don't re-render user messages
-    // if (type === "user") {
-    //   return; // Skip re-rendering
-    // }
-    // For other types, update the message
-    messageContainer.innerHTML = "";
+    // Don't clear innerHTML - we'll do incremental updates
+    // messageContainer.innerHTML = "";
   } else {
     // Create a new container if not found
+    isNewMessage = true;
     const sender = type === "user" ? "user" : "ai";
     messageContainer = document.createElement("div");
     messageContainer.id = `message-${id}`;
     messageContainer.classList.add("message-container", `${sender}-container`);
-    // if (temp) messageContainer.classList.add("message-temp");
   }
 
   const handler = getHandler(type);
   handler(messageContainer, id, type, heading, content, temp, kvps);
 
-  // If the container was found, it was already in the DOM, no need to append again
+  // If this is a new message, handle DOM insertion
   if (!document.getElementById(`message-${id}`)) {
     // message type visual grouping
     const groupTypeMap = {
@@ -45,7 +44,6 @@ export function setMessage(id, type, heading, content, temp, kvps = null) {
       hint: "mid",
       // anything else is "left"
     };
-
     //force new group on these types
     const groupStart = {
       agent: true,
@@ -53,6 +51,10 @@ export function setMessage(id, type, heading, content, temp, kvps = null) {
     };
 
     const groupType = groupTypeMap[type] || "left";
+
+    // here check if messageGroup is still in DOM, if not, then set it to null (context switch)
+    if (messageGroup && !document.getElementById(messageGroup.id))
+      messageGroup = null;
 
     if (
       !messageGroup || // no group yet exists
@@ -64,52 +66,16 @@ export function setMessage(id, type, heading, content, temp, kvps = null) {
       messageGroup.classList.add(`message-group`, `message-group-${groupType}`);
       messageGroup.setAttribute("data-group-type", groupType);
     }
-
     messageGroup.appendChild(messageContainer);
     chatHistory.appendChild(messageGroup);
   }
+
+  // Simplified implementation - no setup needed
+
+  return messageContainer;
 }
 
-function createCopyButton() {
-  const button = document.createElement("button");
-  button.className = "copy-button";
-  button.textContent = "Copy";
-
-  button.addEventListener("click", async function (e) {
-    e.stopPropagation();
-    const container = this.closest(".msg-content, .kvps-row, .message-text");
-    let textToCopy;
-
-    if (container.classList.contains("kvps-row")) {
-      textToCopy = container.querySelector(".kvps-val").innerText;
-    } else if (container.classList.contains("message-text")) {
-      textToCopy = container.querySelector("span").innerText;
-    } else {
-      textToCopy = container.querySelector("span").innerText;
-    }
-
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-      const originalText = button.textContent;
-      button.classList.add("copied");
-      button.textContent = "Copied!";
-      setTimeout(() => {
-        button.classList.remove("copied");
-        button.textContent = originalText;
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy text:", err);
-    }
-  });
-
-  return button;
-}
-
-function addCopyButtonToElement(element) {
-  if (!element.querySelector(".copy-button")) {
-    element.appendChild(createCopyButton());
-  }
-}
+// Legacy copy button functions removed - now using action buttons component
 
 export function getHandler(type) {
   switch (type) {
@@ -157,47 +123,90 @@ export function _drawMessage(
   markdown = false,
   resizeBtns = true
 ) {
-  const messageDiv = document.createElement("div");
-  messageDiv.classList.add("message", mainClass, ...messageClasses);
+  // Find existing message div or create new one
+  let messageDiv = messageContainer.querySelector(".message");
+  if (!messageDiv) {
+    messageDiv = document.createElement("div");
+    messageDiv.classList.add("message");
+    messageContainer.appendChild(messageDiv);
+  }
 
+  // Update message classes
+  messageDiv.className = `message ${mainClass} ${messageClasses.join(" ")}`;
+
+  // Handle heading
   if (heading) {
-    const headingElement = document.createElement("div");
-    headingElement.classList.add("msg-heading");
-    const headingH4 = document.createElement("h4");
+    let headingElement = messageDiv.querySelector(".msg-heading");
+    if (!headingElement) {
+      headingElement = document.createElement("div");
+      headingElement.classList.add("msg-heading");
+      messageDiv.insertBefore(headingElement, messageDiv.firstChild);
+    }
+
+    let headingH4 = headingElement.querySelector("h4");
+    if (!headingH4) {
+      headingH4 = document.createElement("h4");
+      headingElement.appendChild(headingH4);
+    }
     headingH4.innerHTML = convertIcons(escapeHTML(heading));
-    headingElement.appendChild(headingH4);
-    messageDiv.appendChild(headingElement);
 
     if (resizeBtns) {
-      const minMaxBtn = document.createElement("div");
-      minMaxBtn.classList.add("msg-min-max-btns");
-      minMaxBtn.innerHTML = `
-        <a href="#" class="msg-min-max-btn" @click.prevent="$store.messageResize.minimizeMessageClass('${mainClass}', $event)"><span class="material-symbols-outlined" x-text="$store.messageResize.getSetting('${mainClass}').minimized ? 'expand_content' : 'minimize'"></span></a>
-        <a href="#" class="msg-min-max-btn" x-show="!$store.messageResize.getSetting('${mainClass}').minimized" @click.prevent="$store.messageResize.maximizeMessageClass('${mainClass}', $event)"><span class="material-symbols-outlined" x-text="$store.messageResize.getSetting('${mainClass}').maximized ? 'expand' : 'expand_all'"></span></a>
-      `;
-      headingElement.appendChild(minMaxBtn);
+      let minMaxBtn = headingElement.querySelector(".msg-min-max-btns");
+      if (!minMaxBtn) {
+        minMaxBtn = document.createElement("div");
+        minMaxBtn.classList.add("msg-min-max-btns");
+        minMaxBtn.innerHTML = `
+          <a href="#" class="msg-min-max-btn" @click.prevent="$store.messageResize.minimizeMessageClass('${mainClass}', $event)"><span class="material-symbols-outlined" x-text="$store.messageResize.getSetting('${mainClass}').minimized ? 'expand_content' : 'minimize'"></span></a>
+          <a href="#" class="msg-min-max-btn" x-show="!$store.messageResize.getSetting('${mainClass}').minimized" @click.prevent="$store.messageResize.maximizeMessageClass('${mainClass}', $event)"><span class="material-symbols-outlined" x-text="$store.messageResize.getSetting('${mainClass}').maximized ? 'expand' : 'expand_all'"></span></a>
+        `;
+        headingElement.appendChild(minMaxBtn);
+      }
+    }
+  } else {
+    // Remove heading if it exists but heading is null
+    const existingHeading = messageDiv.querySelector(".msg-heading");
+    if (existingHeading) {
+      existingHeading.remove();
     }
   }
 
-  const bodyDiv = document.createElement("div");
-  bodyDiv.classList.add("message-body");
-  messageDiv.appendChild(bodyDiv);
+  // Find existing body div or create new one
+  let bodyDiv = messageDiv.querySelector(".message-body");
+  if (!bodyDiv) {
+    bodyDiv = document.createElement("div");
+    bodyDiv.classList.add("message-body");
+    messageDiv.appendChild(bodyDiv);
+  }
 
-  drawKvps(bodyDiv, kvps, false);
+  // reapply scroll position or autoscroll
+  const scroller = new Scroller(bodyDiv);
 
+  // Handle KVPs incrementally
+  drawKvpsIncremental(bodyDiv, kvps, false);
+
+  // Handle content
   if (content && content.trim().length > 0) {
     if (markdown) {
-      const contentDiv = document.createElement("div");
-      contentDiv.classList.add("msg-content", ...contentClasses);
+      let contentDiv = bodyDiv.querySelector(".msg-content");
+      if (!contentDiv) {
+        contentDiv = document.createElement("div");
+        bodyDiv.appendChild(contentDiv);
+      }
+      contentDiv.className = `msg-content ${contentClasses.join(" ")}`;
 
-      const spanElement = document.createElement("span"); // Wrapper span
+      let spanElement = contentDiv.querySelector("span");
+      if (!spanElement) {
+        spanElement = document.createElement("span");
+        contentDiv.appendChild(spanElement);
+      }
+
       let processedContent = content;
-
       processedContent = convertImageTags(processedContent);
       processedContent = convertImgFilePaths(processedContent);
       processedContent = marked.parse(processedContent, { breaks: true });
       processedContent = convertPathsToLinks(processedContent);
       processedContent = addBlankTargetsToLinks(processedContent);
+
       spanElement.innerHTML = processedContent;
 
       // KaTeX rendering for markdown
@@ -209,59 +218,74 @@ export function _drawMessage(
         });
       }
 
-      contentDiv.appendChild(spanElement);
-      addCopyButtonToElement(contentDiv);
+      // Ensure action buttons exist
+      addActionButtonsToElement(bodyDiv);
       adjustMarkdownRender(contentDiv);
-      bodyDiv.appendChild(contentDiv);
-    } else {
-      const preElement = document.createElement("pre");
-      preElement.classList.add("msg-content", ...contentClasses);
-      preElement.style.whiteSpace = "pre-wrap";
-      preElement.style.wordBreak = "break-word";
 
-      const spanElement = document.createElement("span");
+    } else {
+      let preElement = bodyDiv.querySelector(".msg-content");
+      if (!preElement) {
+        preElement = document.createElement("pre");
+        preElement.classList.add("msg-content", ...contentClasses);
+        preElement.style.whiteSpace = "pre-wrap";
+        preElement.style.wordBreak = "break-word";
+        bodyDiv.appendChild(preElement);
+      } else {
+        // Update classes
+        preElement.className = `msg-content ${contentClasses.join(" ")}`;
+      }
+
+      let spanElement = preElement.querySelector("span");
+      if (!spanElement) {
+        spanElement = document.createElement("span");
+        preElement.appendChild(spanElement);
+      }
+
       spanElement.innerHTML = convertHTML(content);
 
-      // Add click handler for small screens
-      spanElement.addEventListener("click", () => {
-        copyText(spanElement.textContent, spanElement);
-      });
+      // Ensure action buttons exist
+      addActionButtonsToElement(bodyDiv);
 
-      preElement.appendChild(spanElement);
-      addCopyButtonToElement(preElement);
-      bodyDiv.appendChild(preElement);
+    }
+  } else {
+    // Remove content if it exists but content is empty
+    const existingContent = bodyDiv.querySelector(".msg-content");
+    if (existingContent) {
+      existingContent.remove();
     }
   }
 
-  messageContainer.appendChild(messageDiv);
+  // reapply scroll position or autoscroll
+  scroller.reApplyScroll();
 
   if (followUp) {
     messageContainer.classList.add("message-followup");
   }
 
-  // autoscroll the body if needed
-  // if (getAutoScroll()) #TODO needs a better redraw system
-    setTimeout(() => {
-      bodyDiv.scrollTop = bodyDiv.scrollHeight;
-    }, 0);
-
   return messageDiv;
 }
 
 export function addBlankTargetsToLinks(str) {
-  const doc = new DOMParser().parseFromString(str, 'text/html');
+  const doc = new DOMParser().parseFromString(str, "text/html");
 
-  doc.querySelectorAll('a').forEach(anchor => {
-    const href = anchor.getAttribute('href') || '';
-    if (href.startsWith('#') || href.trim().toLowerCase().startsWith('javascript')) return;
-    if (!anchor.hasAttribute('target') || anchor.getAttribute('target') === '') {
-      anchor.setAttribute('target', '_blank');
+  doc.querySelectorAll("a").forEach((anchor) => {
+    const href = anchor.getAttribute("href") || "";
+    if (
+      href.startsWith("#") ||
+      href.trim().toLowerCase().startsWith("javascript")
+    )
+      return;
+    if (
+      !anchor.hasAttribute("target") ||
+      anchor.getAttribute("target") === ""
+    ) {
+      anchor.setAttribute("target", "_blank");
     }
 
-    const rel = (anchor.getAttribute('rel') || '').split(/\s+/).filter(Boolean);
-    if (!rel.includes('noopener')) rel.push('noopener');
-    if (!rel.includes('noreferrer')) rel.push('noreferrer');
-    anchor.setAttribute('rel', rel.join(' '));
+    const rel = (anchor.getAttribute("rel") || "").split(/\s+/).filter(Boolean);
+    if (!rel.includes("noopener")) rel.push("noopener");
+    if (!rel.includes("noreferrer")) rel.push("noreferrer");
+    anchor.setAttribute("rel", rel.join(" "));
   });
   return doc.body.innerHTML;
 }
@@ -378,37 +402,55 @@ export function drawMessageUser(
   kvps = null,
   latex = false
 ) {
-  const messageDiv = document.createElement("div");
-  messageDiv.classList.add("message", "message-user");
+  // Find existing message div or create new one
+  let messageDiv = messageContainer.querySelector(".message");
+  if (!messageDiv) {
+    messageDiv = document.createElement("div");
+    messageDiv.classList.add("message", "message-user");
+    messageContainer.appendChild(messageDiv);
+  } else {
+    // Ensure it has the correct classes if it already exists
+    messageDiv.className = "message message-user";
+  }
 
-  const headingElement = document.createElement("h4");
-  headingElement.classList.add("msg-heading");
-  headingElement.innerHTML =
-    `${heading} <span class='icon material-symbols-outlined'>person</span>`;
-  messageDiv.appendChild(headingElement);
+  // Handle heading
+  let headingElement = messageDiv.querySelector(".msg-heading");
+  if (!headingElement) {
+    headingElement = document.createElement("h4");
+    headingElement.classList.add("msg-heading");
+    messageDiv.insertBefore(headingElement, messageDiv.firstChild);
+  }
+  headingElement.innerHTML = `${heading} <span class='icon material-symbols-outlined'>person</span>`;
 
+  // Handle content
+  let textDiv = messageDiv.querySelector(".message-text");
   if (content && content.trim().length > 0) {
-    const textDiv = document.createElement("div");
-    textDiv.classList.add("message-text");
-
-    // Create a span for the content
-    const spanElement = document.createElement("pre");
+    if (!textDiv) {
+      textDiv = document.createElement("div");
+      textDiv.classList.add("message-text");
+      messageDiv.appendChild(textDiv);
+    }
+    let spanElement = textDiv.querySelector("pre");
+    if (!spanElement) {
+      spanElement = document.createElement("pre");
+      textDiv.appendChild(spanElement);
+    }
     spanElement.innerHTML = escapeHTML(content);
-    textDiv.appendChild(spanElement);
-
-    // Add click handler
-    textDiv.addEventListener("click", () => {
-      copyText(content, textDiv);
-    });
-
-    addCopyButtonToElement(textDiv);
-    messageDiv.appendChild(textDiv);
+    addActionButtonsToElement(textDiv);
+  } else {
+    if (textDiv) textDiv.remove();
   }
 
   // Handle attachments
+  let attachmentsContainer = messageDiv.querySelector(".attachments-container");
   if (kvps && kvps.attachments && kvps.attachments.length > 0) {
-    const attachmentsContainer = document.createElement("div");
-    attachmentsContainer.classList.add("attachments-container");
+    if (!attachmentsContainer) {
+      attachmentsContainer = document.createElement("div");
+      attachmentsContainer.classList.add("attachments-container");
+      messageDiv.appendChild(attachmentsContainer);
+    }
+    // Important: Clear existing attachments to re-render, preventing duplicates on update
+    attachmentsContainer.innerHTML = ""; 
 
     kvps.attachments.forEach((attachment) => {
       const attachmentDiv = document.createElement("div");
@@ -425,38 +467,39 @@ export function drawMessageUser(
         img.classList.add("attachment-preview");
         img.style.cursor = "pointer";
 
-
         attachmentDiv.appendChild(img);
       } else {
         // Render as file tile with title and icon
         attachmentDiv.classList.add("file-type");
-        
+
         // File icon
-        if (displayInfo.previewUrl && displayInfo.previewUrl !== displayInfo.filename) {
+        if (
+          displayInfo.previewUrl &&
+          displayInfo.previewUrl !== displayInfo.filename
+        ) {
           const iconImg = document.createElement("img");
           iconImg.src = displayInfo.previewUrl;
           iconImg.alt = `${displayInfo.extension} file`;
           iconImg.classList.add("file-icon");
           attachmentDiv.appendChild(iconImg);
         }
-        
+
         // File title
         const fileTitle = document.createElement("div");
         fileTitle.classList.add("file-title");
         fileTitle.textContent = displayInfo.filename;
-                
+
         attachmentDiv.appendChild(fileTitle);
       }
 
-      attachmentDiv.addEventListener('click', displayInfo.clickHandler);
+      attachmentDiv.addEventListener("click", displayInfo.clickHandler);
 
       attachmentsContainer.appendChild(attachmentDiv);
     });
-
-    messageDiv.appendChild(attachmentsContainer);
+  } else {
+    if (attachmentsContainer) attachmentsContainer.remove();
   }
-
-  messageContainer.appendChild(messageDiv);
+  // The messageDiv is already appended or updated, no need to append again
 }
 
 export function drawMessageTool(
@@ -673,6 +716,8 @@ function drawKvps(container, kvps, latex) {
         addValue(value);
       }
 
+      addActionButtonsToElement(tdiv);
+
       // autoscroll the KVP value if needed
       // if (getAutoScroll()) #TODO needs a better redraw system
       setTimeout(() => {
@@ -700,12 +745,6 @@ function drawKvps(container, kvps, latex) {
           span.innerHTML = convertHTML(value);
           pre.appendChild(span);
           tdiv.appendChild(pre);
-          addCopyButtonToElement(row);
-
-          // Add click handler
-          span.addEventListener("click", () => {
-            copyText(span.textContent, span);
-          });
 
           // KaTeX rendering for markdown
           if (latex) {
@@ -717,9 +756,133 @@ function drawKvps(container, kvps, latex) {
           }
         }
       }
-
     }
     container.appendChild(table);
+  }
+}
+
+function drawKvpsIncremental(container, kvps, latex) {
+  if (kvps) {
+    // Find existing table or create new one
+    let table = container.querySelector(".msg-kvps");
+    if (!table) {
+      table = document.createElement("table");
+      table.classList.add("msg-kvps");
+      container.appendChild(table);
+    }
+
+    // Get all current rows for comparison
+    let existingRows = table.querySelectorAll(".kvps-row");
+    const kvpEntries = Object.entries(kvps);
+
+    // Update or create rows as needed
+    kvpEntries.forEach(([key, value], index) => {
+      let row = existingRows[index];
+
+      if (!row) {
+        // Create new row if it doesn't exist
+        row = table.insertRow();
+        row.classList.add("kvps-row");
+      }
+
+      // Update row classes
+      row.className = "kvps-row";
+      if (key === "thoughts" || key === "reasoning") {
+        row.classList.add("msg-thoughts");
+      }
+
+      // Handle key cell
+      let th = row.querySelector(".kvps-key");
+      if (!th) {
+        th = row.insertCell(0);
+        th.classList.add("kvps-key");
+      }
+      th.textContent = convertToTitleCase(key);
+
+      // Handle value cell
+      let td = row.cells[1];
+      if (!td) {
+        td = row.insertCell(1);
+      }
+
+      let tdiv = td.querySelector(".kvps-val");
+      if (!tdiv) {
+        tdiv = document.createElement("div");
+        tdiv.classList.add("kvps-val");
+        td.appendChild(tdiv);
+      }
+
+      // reapply scroll position or autoscroll
+      const scroller = new Scroller(tdiv);
+
+      // Clear and rebuild content (for now - could be optimized further)
+      tdiv.innerHTML = "";
+
+      addActionButtonsToElement(tdiv);
+
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          addValue(item, tdiv);
+        }
+      } else {
+        addValue(value, tdiv);
+      }
+
+      // reapply scroll position or autoscroll
+      scroller.reApplyScroll();
+    });
+
+    // Remove extra rows if we have fewer kvps now
+    while (existingRows.length > kvpEntries.length) {
+      const lastRow = existingRows[existingRows.length - 1];
+      lastRow.remove();
+      existingRows = table.querySelectorAll(".kvps-row");
+    }
+
+    function addValue(value, tdiv) {
+      if (typeof value === "object") value = JSON.stringify(value, null, 2);
+
+      if (typeof value === "string" && value.startsWith("img://")) {
+        const imgElement = document.createElement("img");
+        imgElement.classList.add("kvps-img");
+        imgElement.src = value.replace("img://", "/image_get?path=");
+        imgElement.alt = "Image Attachment";
+        tdiv.appendChild(imgElement);
+
+        // Add click handler and cursor change
+        imgElement.style.cursor = "pointer";
+        imgElement.addEventListener("click", () => {
+          openImageModal(imgElement.src, 1000);
+        });
+      } else {
+        const pre = document.createElement("pre");
+        const span = document.createElement("span");
+        span.innerHTML = convertHTML(value);
+        pre.appendChild(span);
+        tdiv.appendChild(pre);
+
+        // Add action buttons to the row
+        // const row = tdiv.closest(".kvps-row");
+        // if (row) {
+          // addActionButtonsToElement(pre);
+        // }
+
+        // KaTeX rendering for markdown
+        if (latex) {
+          span.querySelectorAll("latex").forEach((element) => {
+            katex.render(element.innerHTML, element, {
+              throwOnError: false,
+            });
+          });
+        }
+      }
+    }
+  } else {
+    // Remove table if kvps is null/empty
+    const existingTable = container.querySelector(".msg-kvps");
+    if (existingTable) {
+      existingTable.remove();
+    }
   }
 }
 
@@ -747,18 +910,6 @@ function convertImageTags(content) {
   return updatedContent;
 }
 
-async function copyText(text, element) {
-  try {
-    await navigator.clipboard.writeText(text);
-    element.classList.add("copied");
-    setTimeout(() => {
-      element.classList.remove("copied");
-    }, 2000);
-  } catch (err) {
-    console.error("Failed to copy text:", err);
-  }
-}
-
 function convertHTML(str) {
   if (typeof str !== "string") str = JSON.stringify(str, null, 2);
 
@@ -769,7 +920,7 @@ function convertHTML(str) {
 }
 
 function convertImgFilePaths(str) {
-  return str.replace("img://", "/image_get?path=");
+  return str.replace(/img:\/\//g, "/image_get?path=");
 }
 
 export function convertIcons(str) {
@@ -837,4 +988,23 @@ function adjustMarkdownRender(element) {
     el.parentNode.insertBefore(wrapper, el);
     wrapper.appendChild(el);
   });
+}
+
+class Scroller {
+  constructor(element) {
+    this.element = element;
+    this.wasAtBottom = this.isAtBottom();
+  }
+
+  isAtBottom(tolerance = 10) {
+    const scrollHeight = this.element.scrollHeight;
+    const clientHeight = this.element.clientHeight;
+    const distanceFromBottom =
+      scrollHeight - this.element.scrollTop - clientHeight;
+    return distanceFromBottom <= tolerance;
+  }
+
+  reApplyScroll() {
+    if (this.wasAtBottom) this.element.scrollTop = this.element.scrollHeight;
+  }
 }

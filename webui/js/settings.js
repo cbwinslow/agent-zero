@@ -1,4 +1,3 @@
-
 const settingsModalProxy = {
     isOpen: false,
     settings: {},
@@ -65,19 +64,6 @@ const settingsModalProxy = {
                         if (typeof schedulerData.fetchTasks === 'function') {
                             schedulerData.fetchTasks();
                         }
-                    }
-                }
-            }
-
-            // When switching to the tunnel tab, initialize tunnelSettings
-            if (tabName === 'tunnel') {
-                console.log('Switching to tunnel tab, initializing tunnelSettings');
-                const tunnelElement = document.querySelector('[x-data="tunnelSettings"]');
-                if (tunnelElement) {
-                    const tunnelData = Alpine.$data(tunnelElement);
-                    if (tunnelData && typeof tunnelData.checkTunnelStatus === 'function') {
-                        // Check tunnel status
-                        tunnelData.checkTunnelStatus();
                     }
                 }
             }
@@ -291,6 +277,12 @@ const settingsModalProxy = {
             openModal("settings/backup/backup.html");
         } else if (field.id === "backup_restore") {
             openModal("settings/backup/restore.html");
+        } else if (field.id === "show_a2a_connection") {
+            openModal("settings/external/a2a-connection.html");
+        } else if (field.id === "external_api_examples") {
+            openModal("settings/external/api-examples.html");
+        } else if (field.id === "memory_dashboard") {
+            openModal("settings/memory/memory-dashboard.html");
         }
     }
 };
@@ -575,24 +567,25 @@ document.addEventListener('alpine:init', function () {
     });
 });
 
-// Show toast notification
+// Show toast notification - now uses new notification system
 function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
-
-    document.body.appendChild(toast);
-
-    // Trigger animation
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-
-    // Remove after delay
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => {
-            document.body.removeChild(toast);
-        }, 300);
-    }, 3000);
+    // Use new frontend notification system based on type
+    if (window.Alpine && window.Alpine.store && window.Alpine.store('notificationStore')) {
+        const store = window.Alpine.store('notificationStore');
+        switch (type.toLowerCase()) {
+            case 'error':
+                return store.frontendError(message, "Settings", 5);
+            case 'success':
+                return store.frontendInfo(message, "Settings", 3);
+            case 'warning':
+                return store.frontendWarning(message, "Settings", 4);
+            case 'info':
+            default:
+                return store.frontendInfo(message, "Settings", 3);
+        }
+    } else {
+        // Fallback if Alpine/store not ready
+        console.log(`SETTINGS ${type.toUpperCase()}: ${message}`);
+        return null;
+    }
 }

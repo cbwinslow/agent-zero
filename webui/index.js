@@ -4,8 +4,9 @@ import * as css from "/js/css.js";
 import { sleep } from "/js/sleep.js";
 import { store as attachmentsStore } from "/components/chat/attachments/attachmentsStore.js";
 import { store as speechStore } from "/components/chat/speech/speech-store.js";
+import { store as notificationStore } from "/components/notifications/notification-store.js";
 
-window.fetchApi = api.fetchApi; // TODO - backward compatibility for non-modular scripts, remove once refactored to alpine
+globalThis.fetchApi = api.fetchApi; // TODO - backward compatibility for non-modular scripts, remove once refactored to alpine
 
 const leftPanel = document.getElementById("left-panel");
 const rightPanel = document.getElementById("right-panel");
@@ -25,7 +26,7 @@ let autoScroll = true;
 let context = "";
 let resetCounter = 0;
 let skipOneSpeech = false;
-let connectionStatus = false;
+let connectionStatus = undefined; // undefined = not checked yet, true = connected, false = disconnected
 
 // Initialize the toggle button
 setupSidebarToggle();
@@ -69,8 +70,8 @@ function handleResize() {
   }
 }
 
-window.addEventListener("load", handleResize);
-window.addEventListener("resize", handleResize);
+globalThis.addEventListener("load", handleResize);
+globalThis.addEventListener("resize", handleResize);
 
 document.addEventListener("DOMContentLoaded", () => {
   const overlay = document.getElementById("sidebar-overlay");
@@ -162,25 +163,32 @@ export async function sendMessage() {
       }
     }
   } catch (e) {
-    toastFetchError("Error sending message", e);
+    toastFetchError("Error sending message", e); // Will use new notification system
   }
 }
 
 function toastFetchError(text, error) {
-  if (getConnectionStatus()) {
-    toast(`${text}: ${error.message}`, "error");
-  } else {
-    toast(
-      `${text} (it seems the backend is not running): ${error.message}`,
-      "error"
-    );
-  }
   console.error(text, error);
+  // Use new frontend error notification system (async, but we don't need to wait)
+  const errorMessage = error?.message || error?.toString() || "Unknown error";
+
+  if (getConnectionStatus()) {
+    // Backend is connected, just show the error
+    toastFrontendError(`${text}: ${errorMessage}`).catch((e) =>
+      console.error("Failed to show error toast:", e)
+    );
+  } else {
+    // Backend is disconnected, show connection error
+    toastFrontendError(
+      `${text} (backend appears to be disconnected): ${errorMessage}`,
+      "Connection Error"
+    ).catch((e) => console.error("Failed to show connection error toast:", e));
+  }
 }
-window.toastFetchError = toastFetchError;
+globalThis.toastFetchError = toastFetchError;
 
 chatInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
     e.preventDefault();
     sendMessage();
   }
@@ -234,7 +242,7 @@ function setMessage(id, type, heading, content, temp, kvps = null) {
   return result;
 }
 
-window.loadKnowledge = async function () {
+globalThis.loadKnowledge = async function () {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".txt,.pdf,.csv,.html,.json,.md";
@@ -293,7 +301,7 @@ export const sendJsonData = async function (url, data) {
   // const jsonResponse = await response.json();
   // return jsonResponse;
 };
-window.sendJsonData = sendJsonData;
+globalThis.sendJsonData = sendJsonData;
 
 function generateGUID() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -309,7 +317,7 @@ function getConnectionStatus() {
 
 function setConnectionStatus(connected) {
   connectionStatus = connected;
-  if (window.Alpine && timeDate) {
+  if (globalThis.Alpine && timeDate) {
     const statusIconEl = timeDate.querySelector(".status-icon");
     if (statusIconEl) {
       const statusIcon = Alpine.$data(statusIconEl);
@@ -330,8 +338,10 @@ async function poll() {
     // Get timezone from navigator
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+    const log_from = lastLogVersion;
     const response = await sendJsonData("/poll", {
-      log_from: lastLogVersion,
+      log_from: log_from,
+      notifications_from: notificationStore.lastNotificationVersion || 0,
       context: context || null,
       timezone: timezone,
     });
@@ -345,9 +355,13 @@ async function poll() {
     if (!context) setContext(response.context);
     if (response.context != context) return; //skip late polls after context change
 
+    // if the chat has been reset, restart this poll as it may have been called with incorrect log_from
     if (lastLogGuid != response.log_guid) {
       chatHistory.innerHTML = "";
       lastLogVersion = 0;
+      lastLogGuid = response.log_guid;
+      await poll();
+      return;
     }
 
     if (lastLogVersion != response.log_version) {
@@ -371,8 +385,11 @@ async function poll() {
 
     updateProgress(response.log_progress, response.log_progress_active);
 
+    // Update notifications from response
+    notificationStore.updateFromPoll(response);
+
     //set ui model vars from backend
-    if (window.Alpine && inputSection) {
+    if (globalThis.Alpine && inputSection) {
       const inputAD = Alpine.$data(inputSection);
       if (inputAD) {
         inputAD.paused = response.paused;
@@ -385,7 +402,7 @@ async function poll() {
     // Update chats list and sort by created_at time (newer first)
     let chatsAD = null;
     let contexts = response.contexts || [];
-    if (window.Alpine && chatsSection) {
+    if (globalThis.Alpine && chatsSection) {
       chatsAD = Alpine.$data(chatsSection);
       if (chatsAD) {
         chatsAD.contexts = contexts.sort(
@@ -396,7 +413,7 @@ async function poll() {
 
     // Update tasks list and sort by creation time (newer first)
     const tasksSection = document.getElementById("tasks-section");
-    if (window.Alpine && tasksSection) {
+    if (globalThis.Alpine && tasksSection) {
       const tasksAD = Alpine.$data(tasksSection);
       if (tasksAD) {
         let tasks = response.tasks || [];
@@ -556,15 +573,15 @@ function updateProgress(progress, active) {
   }
 }
 
-window.pauseAgent = async function (paused) {
+globalThis.pauseAgent = async function (paused) {
   try {
     const resp = await sendJsonData("/pause", { paused: paused, context });
   } catch (e) {
-    window.toastFetchError("Error pausing agent", e);
+    globalThis.toastFetchError("Error pausing agent", e);
   }
 };
 
-window.resetChat = async function (ctxid = null) {
+globalThis.resetChat = async function (ctxid = null) {
   try {
     const resp = await sendJsonData("/chat_reset", {
       context: ctxid === null ? context : ctxid,
@@ -572,20 +589,20 @@ window.resetChat = async function (ctxid = null) {
     resetCounter++;
     if (ctxid === null) updateAfterScroll();
   } catch (e) {
-    window.toastFetchError("Error resetting chat", e);
+    globalThis.toastFetchError("Error resetting chat", e);
   }
 };
 
-window.newChat = async function () {
+globalThis.newChat = async function () {
   try {
-    setContext(generateGUID());
+    newContext();
     updateAfterScroll();
   } catch (e) {
-    window.toastFetchError("Error creating new chat", e);
+    globalThis.toastFetchError("Error creating new chat", e);
   }
 };
 
-window.killChat = async function (id) {
+globalThis.killChat = async function (id) {
   if (!id) {
     console.error("No chat ID provided for deletion");
     return;
@@ -619,10 +636,10 @@ window.killChat = async function (id) {
 
     updateAfterScroll();
 
-    toast("Chat deleted successfully", "success");
+    justToast("Chat deleted successfully", "success", 1000, "chat-removal");
   } catch (e) {
     console.error("Error deleting chat:", e);
-    window.toastFetchError("Error deleting chat", e);
+    globalThis.toastFetchError("Error deleting chat", e);
   }
 };
 
@@ -644,7 +661,7 @@ export function switchFromContext(id) {
       setContext(alternateChat.id);
     } else {
       // If no other chats, create a new empty context
-      setContext(generateGUID());
+      newContext();
     }
   }
 }
@@ -684,7 +701,7 @@ function ensureProperTabSelection(contextId) {
   return false;
 }
 
-window.selectChat = async function (id) {
+globalThis.selectChat = async function (id) {
   if (id === context) return; //already selected
 
   // Check if we need to switch tabs based on the context type
@@ -719,6 +736,20 @@ window.selectChat = async function (id) {
   updateAfterScroll();
 };
 
+function generateShortId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+export const newContext = function () {
+  context = generateShortId();
+  setContext(context);
+}
+
 export const setContext = function (id) {
   if (id == context) return;
   context = id;
@@ -735,7 +766,7 @@ export const setContext = function (id) {
   chatHistory.innerHTML = "";
 
   // Update both selected states
-  if (window.Alpine) {
+  if (globalThis.Alpine) {
     if (chatsSection) {
       const chatsAD = Alpine.$data(chatsSection);
       if (chatsAD) chatsAD.selected = id;
@@ -758,15 +789,15 @@ export const getChatBasedId = function (id) {
   return context + "-" + resetCounter + "-" + id;
 };
 
-window.toggleAutoScroll = async function (_autoScroll) {
+globalThis.toggleAutoScroll = async function (_autoScroll) {
   autoScroll = _autoScroll;
 };
 
-window.toggleJson = async function (showJson) {
+globalThis.toggleJson = async function (showJson) {
   css.toggleCssProperty(".msg-json", "display", showJson ? "block" : "none");
 };
 
-window.toggleThoughts = async function (showThoughts) {
+globalThis.toggleThoughts = async function (showThoughts) {
   css.toggleCssProperty(
     ".msg-thoughts",
     "display",
@@ -774,7 +805,7 @@ window.toggleThoughts = async function (showThoughts) {
   );
 };
 
-window.toggleUtils = async function (showUtils) {
+globalThis.toggleUtils = async function (showUtils) {
   css.toggleCssProperty(
     ".message-util",
     "display",
@@ -782,7 +813,7 @@ window.toggleUtils = async function (showUtils) {
   );
 };
 
-window.toggleDarkMode = function (isDark) {
+globalThis.toggleDarkMode = function (isDark) {
   if (isDark) {
     document.body.classList.remove("light-mode");
     document.body.classList.add("dark-mode");
@@ -794,13 +825,13 @@ window.toggleDarkMode = function (isDark) {
   localStorage.setItem("darkMode", isDark);
 };
 
-window.toggleSpeech = function (isOn) {
+globalThis.toggleSpeech = function (isOn) {
   console.log("Speech:", isOn);
   localStorage.setItem("speech", isOn);
   if (!isOn) speechStore.stopAudio();
 };
 
-window.nudge = async function () {
+globalThis.nudge = async function () {
   try {
     const resp = await sendJsonData("/nudge", { ctxid: getContext() });
   } catch (e) {
@@ -808,17 +839,20 @@ window.nudge = async function () {
   }
 };
 
-window.restart = async function () {
+globalThis.restart = async function () {
   try {
     if (!getConnectionStatus()) {
-      toast("Backend disconnected, cannot restart.", "error");
+      await toastFrontendError(
+        "Backend disconnected, cannot restart.",
+        "Restart Error"
+      );
       return;
     }
     // First try to initiate restart
     const resp = await sendJsonData("/restart", {});
   } catch (e) {
-    // Show restarting message
-    toast("Restarting...", "info", 0);
+    // Show restarting message with no timeout and restart group
+    await toastFrontendInfo("Restarting...", "System Restart", 9999, "restart");
 
     let retries = 0;
     const maxRetries = 240; // Maximum number of retries (60 seconds with 250ms interval)
@@ -826,11 +860,9 @@ window.restart = async function () {
     while (retries < maxRetries) {
       try {
         const resp = await sendJsonData("/health", {});
-        // Server is back up, show success message
+        // Server is back up, show success message that replaces the restarting message
         await new Promise((resolve) => setTimeout(resolve, 250));
-        hideToast();
-        await new Promise((resolve) => setTimeout(resolve, 400));
-        toast("Restarted", "success", 5000);
+        await toastFrontendSuccess("Restarted", "System Restart", 5, "restart");
         return;
       } catch (e) {
         // Server still down, keep waiting
@@ -840,9 +872,12 @@ window.restart = async function () {
     }
 
     // If we get here, restart failed or took too long
-    hideToast();
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    toast("Restart timed out or failed", "error", 5000);
+    await toastFrontendError(
+      "Restart timed out or failed",
+      "Restart Error",
+      8,
+      "restart"
+    );
   }
 };
 
@@ -852,7 +887,7 @@ document.addEventListener("DOMContentLoaded", () => {
   toggleDarkMode(isDarkMode);
 });
 
-window.loadChats = async function () {
+globalThis.loadChats = async function () {
   try {
     const fileContents = await readJsonFiles();
     const response = await sendJsonData("/chat_load", { chats: fileContents });
@@ -876,7 +911,7 @@ window.loadChats = async function () {
   }
 };
 
-window.saveChat = async function () {
+globalThis.saveChat = async function () {
   try {
     const response = await sendJsonData("/chat_export", { ctxid: context });
 
@@ -969,99 +1004,41 @@ function removeClassFromElement(element, className) {
   element.classList.remove(className);
 }
 
+function justToast(text, type = "info", timeout = 5000, group = "") {
+  notificationStore.addFrontendToastOnly(
+    type,
+    text,
+    "",
+    timeout / 1000,
+    group
+  )
+}
+  
+
 function toast(text, type = "info", timeout = 5000) {
-  const toast = document.getElementById("toast");
-  const isVisible = toast.classList.contains("show");
+  // Convert timeout from milliseconds to seconds for new notification system
+  const display_time = Math.max(timeout / 1000, 1); // Minimum 1 second
 
-  // Clear any existing timeout immediately
-  if (toast.timeoutId) {
-    clearTimeout(toast.timeoutId);
-    toast.timeoutId = null;
-  }
-
-  // Function to update toast content and show it
-  const updateAndShowToast = () => {
-    // Update the toast content and type
-    const title = type.charAt(0).toUpperCase() + type.slice(1);
-    toast.querySelector(".toast__title").textContent = title;
-    toast.querySelector(".toast__message").textContent = text;
-
-    // Remove old classes and add new ones
-    toast.classList.remove("toast--success", "toast--error", "toast--info");
-    toast.classList.add(`toast--${type}`);
-
-    // Show/hide copy button based on toast type
-    const copyButton = toast.querySelector(".toast__copy");
-    copyButton.style.display = type === "error" ? "inline-block" : "none";
-
-    // Add the close button event listener
-    const closeButton = document.querySelector(".toast__close");
-    closeButton.onclick = () => {
-      hideToast();
-    };
-
-    // Add the copy button event listener
-    copyButton.onclick = () => {
-      navigator.clipboard.writeText(text);
-      copyButton.textContent = "Copied!";
-      setTimeout(() => {
-        copyButton.textContent = "Copy";
-      }, 2000);
-    };
-
-    // Show the toast
-    toast.style.display = "flex";
-    // Force a reflow to ensure the animation triggers
-    void toast.offsetWidth;
-    toast.classList.add("show");
-
-    // Set timeout if specified
-    if (timeout) {
-      const minTimeout = Math.max(timeout, 5000);
-      toast.timeoutId = setTimeout(() => {
-        hideToast();
-      }, minTimeout);
+  // Use new frontend notification system based on type
+    switch (type.toLowerCase()) {
+      case "error":
+        return notificationStore.frontendError(text, "Error", display_time);
+      case "success":
+        return notificationStore.frontendInfo(text, "Success", display_time);
+      case "warning":
+        return notificationStore.frontendWarning(text, "Warning", display_time);
+      case "info":
+      default:
+        return notificationStore.frontendInfo(text, "Info", display_time);
     }
-  };
 
-  if (isVisible) {
-    // If a toast is visible, hide it first then show the new one
-    toast.classList.remove("show");
-    toast.classList.add("hide");
-
-    // Wait for hide animation to complete before showing new toast
-    setTimeout(() => {
-      toast.classList.remove("hide");
-      updateAndShowToast();
-    }, 400); // Match this with CSS transition duration
-  } else {
-    // If no toast is visible, show the new one immediately
-    updateAndShowToast();
-  }
 }
-window.toast = toast;
+globalThis.toast = toast;
 
-function hideToast() {
-  const toast = document.getElementById("toast");
-
-  // Clear any existing timeout
-  if (toast.timeoutId) {
-    clearTimeout(toast.timeoutId);
-    toast.timeoutId = null;
-  }
-
-  toast.classList.remove("show");
-  toast.classList.add("hide");
-
-  // Wait for the hide animation to complete before removing from display
-  setTimeout(() => {
-    toast.style.display = "none";
-    toast.classList.remove("hide");
-  }, 400); // Match this with CSS transition duration
-}
+// OLD: hideToast function removed - now using new notification system
 
 function scrollChanged(isAtBottom) {
-  if (window.Alpine && autoScrollSwitch) {
+  if (globalThis.Alpine && autoScrollSwitch) {
     const inputAS = Alpine.$data(autoScrollSwitch);
     if (inputAS) {
       inputAS.autoScroll = isAtBottom;
@@ -1073,7 +1050,7 @@ function scrollChanged(isAtBottom) {
 function updateAfterScroll() {
   // const toleranceEm = 1; // Tolerance in em units
   // const tolerancePx = toleranceEm * parseFloat(getComputedStyle(document.documentElement).fontSize); // Convert em to pixels
-  const tolerancePx = 50;
+  const tolerancePx = 10;
   const chatHistory = document.getElementById("chat-history");
   const isAtBottom =
     chatHistory.scrollHeight - chatHistory.scrollTop <=
@@ -1173,7 +1150,7 @@ function activateTab(tabName) {
     chatsSection.style.display = "";
 
     // Get the available contexts from Alpine.js data
-    const chatsAD = window.Alpine ? Alpine.$data(chatsSection) : null;
+    const chatsAD = globalThis.Alpine ? Alpine.$data(chatsSection) : null;
     const availableContexts = chatsAD?.contexts || [];
 
     // Restore previous chat selection
@@ -1197,7 +1174,7 @@ function activateTab(tabName) {
     tasksSection.style.flexDirection = "column";
 
     // Get the available tasks from Alpine.js data
-    const tasksAD = window.Alpine ? Alpine.$data(tasksSection) : null;
+    const tasksAD = globalThis.Alpine ? Alpine.$data(tasksSection) : null;
     const availableTasks = tasksAD?.tasks || [];
 
     // Restore previous task selection
@@ -1249,7 +1226,7 @@ function initializeActiveTab() {
 // Open the scheduler detail view for a specific task
 function openTaskDetail(taskId) {
   // Wait for Alpine.js to be fully loaded
-  if (window.Alpine) {
+  if (globalThis.Alpine) {
     // Get the settings modal button and click it to ensure all init logic happens
     const settingsButton = document.getElementById("settings");
     if (settingsButton) {
@@ -1264,7 +1241,7 @@ function openTaskDetail(taskId) {
       }
 
       // Get the Alpine.js data for the modal
-      const modalData = window.Alpine ? Alpine.$data(modalEl) : null;
+      const modalData = globalThis.Alpine ? Alpine.$data(modalEl) : null;
 
       // Use a timeout to ensure the modal is fully rendered
       setTimeout(() => {
@@ -1283,7 +1260,7 @@ function openTaskDetail(taskId) {
           }
 
           // Get the Alpine.js data for the scheduler component
-          const schedulerData = window.Alpine
+          const schedulerData = globalThis.Alpine
             ? Alpine.$data(schedulerComponent)
             : null;
 
@@ -1302,4 +1279,4 @@ function openTaskDetail(taskId) {
 }
 
 // Make the function available globally
-window.openTaskDetail = openTaskDetail;
+globalThis.openTaskDetail = openTaskDetail;
