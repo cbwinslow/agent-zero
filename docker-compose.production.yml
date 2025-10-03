@@ -270,7 +270,7 @@ services:
     image: opensearchproject/opensearch-dashboards:latest
     environment:
       - OPENSEARCH_HOSTS=["http://opensearch:9200"]
-      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true  # Enable for development
+      # DISABLE_SECURITY_DASHBOARDS_PLUGIN is not set for production; security plugin is enabled by default
     ports:
       - "5601:5601"
     depends_on:
