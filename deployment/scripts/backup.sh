@@ -13,10 +13,13 @@ BACKUP_NAME="agent-zero-backup-$TIMESTAMP"
 # Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"
 
+# log writes a timestamped message to stdout, prefixing the provided text with "[YYYY-MM-DD HH:MM:SS]".
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
+# backup_volumes backs up Docker volumes and the PostgreSQL database into timestamped archives in BACKUP_DIR.
+# Creates compressed tar.gz archives for the memory, knowledge, logs, and redis volumes and a gzipped SQL dump for PostgreSQL.
 backup_volumes() {
     log "Starting backup of Docker volumes..."
     
@@ -55,6 +58,7 @@ backup_volumes() {
     log "Volume backups completed"
 }
 
+# backup_configs creates a compressed tarball of Agent Zero configuration files (.env, config/, docker-compose.production.yml) in the backup directory and ignores missing files.
 backup_configs() {
     log "Backing up configuration files..."
     
@@ -68,6 +72,8 @@ backup_configs() {
     log "Configuration backup completed"
 }
 
+# create_manifest creates a manifest file at "$BACKUP_DIR/${BACKUP_NAME}-manifest.txt" summarizing the backup (date, backup name, agent path), the list of files matching the backup name, total size, known Docker volumes, databases, and current services as reported by docker-compose.
+# If no backup files match, the manifest will contain "No files found"; docker-compose errors are suppressed when listing services.
 create_manifest() {
     log "Creating backup manifest..."
     
@@ -101,6 +107,7 @@ EOF
     log "Manifest created"
 }
 
+# cleanup_old_backups deletes files in "$BACKUP_DIR" named "agent-zero-backup-*" that are older than "$RETENTION_DAYS" days.
 cleanup_old_backups() {
     log "Cleaning up backups older than $RETENTION_DAYS days..."
     
@@ -109,6 +116,7 @@ cleanup_old_backups() {
     log "Cleanup completed"
 }
 
+# main orchestrates the backup workflow by switching to AGENT_ZERO_PATH, running volume and config backups, creating a manifest, cleaning old backups, and logging completion details including backup location, name, and total size.
 main() {
     log "Starting Agent Zero backup process..."
     

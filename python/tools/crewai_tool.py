@@ -17,20 +17,17 @@ class CrewAI(Tool):
     
     async def execute(self, action="", **kwargs):
         """
-        Execute CrewAI action.
+        Dispatches CrewAI actions to manage crew configurations and executions.
         
-        Actions:
-        - list: List available crew configurations
-        - templates: List available crew templates
-        - create: Create a new crew configuration
-        - run: Run a crew
-        - get: Get crew configuration details
-        - delete: Delete a crew configuration
+        Parameters:
+            action (str): The operation to perform. Allowed values: "list", "templates", "create", "run", "get", "delete".
+            **kwargs: Action-specific parameters:
+                - For "create": `name` (str, required), optional `template` (str) or custom `description` (str), `agents` (list), `tasks` (list).
+                - For "run": `name` (str, required), optional `inputs` (dict).
+                - For "get" and "delete": `name` (str, required).
         
-        Examples:
-        - List crews: action="list"
-        - Use template: action="create", template="research", name="my_research_crew"
-        - Run crew: action="run", name="my_research_crew", inputs={"topic": "AI trends"}
+        Returns:
+            Response: A tool response containing a user-facing message describing the outcome and control flags.
         """
         
         crew_mgr = CrewManager(self.agent)
@@ -61,7 +58,12 @@ class CrewAI(Tool):
             )
     
     async def _list_crews(self, crew_mgr: CrewManager):
-        """List all crew configurations"""
+        """
+        List stored crew configurations and format them into a user-facing message.
+        
+        Returns:
+            Response: A Response whose `message` contains a formatted list of available crew configurations (name, description, agent count, task count, and process). If no configurations exist, the message indicates that and suggests using templates. The Response's `break_loop` is False.
+        """
         configs = crew_mgr.list_configs()
         
         if not configs:
@@ -81,7 +83,12 @@ class CrewAI(Tool):
         return Response(message=message, break_loop=False)
     
     async def _list_templates(self):
-        """List available crew templates"""
+        """
+        List available crew templates with a brief summary and usage hint.
+        
+        Returns:
+            Response: A Response whose message lists each template's name, description, agent roles, task count, and an example 'create' usage for that template.
+        """
         message = "## Available Crew Templates\n\n"
         
         for name, template in CREW_TEMPLATES.items():
@@ -94,7 +101,23 @@ class CrewAI(Tool):
         return Response(message=message, break_loop=False)
     
     async def _create_crew(self, crew_mgr: CrewManager, **kwargs):
-        """Create a new crew configuration"""
+        """
+        Create and save a new crew configuration from a template or from provided agent and task definitions.
+        
+        Creates a new CrewConfig using either a named template (from CREW_TEMPLATES) or custom parameters, validates required inputs and uniqueness, sets the config's creator to the current agent, saves the configuration via the provided CrewManager, and returns a user-facing status message.
+        
+        Parameters:
+            crew_mgr (CrewManager): Manager used to retrieve, save, and validate crew configurations.
+            kwargs:
+                name (str): Required. The unique name for the new crew configuration.
+                template (str, optional): Name of a predefined template to instantiate the crew from.
+                description (str, optional): Description for a custom crew (used when not creating from a template).
+                agents (list[dict], optional): For custom crews, list of agent definitions; each dict should include keys `role`, `goal`, and optionally `backstory`.
+                tasks (list[dict], optional): For custom crews, list of task definitions; each dict should include `description`, `agent`, and optionally `expected_output`.
+        
+        Returns:
+            Response: A Response whose `message` contains either an error explanation or a summary of the created crew (description, agent count, task count). `break_loop` is False.
+        """
         name = kwargs.get("name")
         template = kwargs.get("template")
         
@@ -173,7 +196,18 @@ class CrewAI(Tool):
         return Response(message=message, break_loop=False)
     
     async def _run_crew(self, crew_mgr: CrewManager, **kwargs):
-        """Run a crew"""
+        """
+        Execute a saved crew configuration by name.
+        
+        Validates that a crew name is provided and that the crew exists, then runs the crew with optional inputs and returns a Response summarizing the outcome.
+        
+        Parameters:
+            name (str, in kwargs): The name of the crew configuration to run.
+            inputs (dict, in kwargs, optional): Mapping of input values to pass to the crew run.
+        
+        Returns:
+            Response: A Response whose message contains either a success summary (including duration in seconds and run results) or failure details (including error information). The Response's `break_loop` is False.
+        """
         name = kwargs.get("name")
         inputs = kwargs.get("inputs", {})
         
@@ -205,7 +239,17 @@ class CrewAI(Tool):
         return Response(message=message, break_loop=False)
     
     async def _get_crew(self, crew_mgr: CrewManager, **kwargs):
-        """Get crew configuration details"""
+        """
+        Retrieve and format the stored configuration for a named crew.
+        
+        If `name` is missing from kwargs or no crew with that name exists, the function returns a Response containing an error message. Otherwise, the Response message contains a formatted summary of the crew configuration including name, description, process, creator, a list of agents (role, goal, backstory), and an ordered list of tasks (description, associated agent, expected output).
+        
+        Parameters:
+            name (str, in kwargs): The name of the crew configuration to retrieve.
+        
+        Returns:
+            Response: A Response whose message is either an error string (when `name` is missing or not found) or a formatted detail view of the crew configuration.
+        """
         name = kwargs.get("name")
         
         if not name:
@@ -241,7 +285,15 @@ class CrewAI(Tool):
         return Response(message=message, break_loop=False)
     
     async def _delete_crew(self, crew_mgr: CrewManager, **kwargs):
-        """Delete a crew configuration"""
+        """
+        Delete a named crew configuration.
+        
+        Parameters:
+            name (str): The name of the crew to delete.
+        
+        Returns:
+            Response: Confirmation message on successful deletion (`"✅ Deleted crew '<name>'"`) or an error message if the crew was not found.
+        """
         name = kwargs.get("name")
         
         if not name:

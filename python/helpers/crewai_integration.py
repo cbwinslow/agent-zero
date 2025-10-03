@@ -74,6 +74,18 @@ class CrewConfig:
     created_by: str = "agent-zero"
     
     def to_dict(self) -> Dict:
+        """
+        Serialize the CrewConfig into a JSON-serializable dictionary.
+        
+        Includes top-level fields (name, description, process, verbose, created_at, created_by)
+        and nested serializations of agents and tasks. Agent entries include role, goal,
+        backstory, verbose, allow_delegation, tools, and llm_config. Task entries include
+        description, agent, expected_output, context, async_execution, and tools.
+        created_at is represented as an ISO 8601 string.
+        
+        Returns:
+            dict: The dictionary representation of this CrewConfig suitable for JSON storage.
+        """
         return {
             "name": self.name,
             "description": self.description,
@@ -108,6 +120,15 @@ class CrewConfig:
     
     @staticmethod
     def from_dict(data: Dict) -> 'CrewConfig':
+        """
+        Create a CrewConfig instance from a serialized dictionary.
+        
+        Parameters:
+            data (Dict): Dictionary produced by CrewConfig.to_dict() (or with equivalent shape). Expected keys include "name", "description", optional "agents" (list of agent dicts), optional "tasks" (list of task dicts), optional "process", "verbose", "created_at" (ISO datetime string), and "created_by".
+        
+        Returns:
+            CrewConfig: A reconstructed CrewConfig with nested AgentConfig and TaskConfig objects. If "created_at" is present it is parsed from ISO format; otherwise the current datetime is used.
+        """
         return CrewConfig(
             name=data["name"],
             description=data["description"],
@@ -145,6 +166,15 @@ class CrewManager:
     """Manages CrewAI crews for Agent Zero"""
     
     def __init__(self, agent: A0Agent):
+        """
+        Initialize the CrewManager for the given Agent Zero agent and load any persisted crew configurations.
+        
+        Parameters:
+            agent (A0Agent): The Agent Zero agent instance that the manager will use for LLM configuration and runtime context.
+        
+        Raises:
+            ImportError: If the CrewAI library is not available.
+        """
         if not CREWAI_AVAILABLE:
             raise ImportError("CrewAI is not installed. Install with: pip install crewai crewai-tools")
         
@@ -154,7 +184,12 @@ class CrewManager:
         self._load_configs()
     
     def _get_configs_dir(self) -> str:
-        """Get directory for crew configurations"""
+        """
+        Get the filesystem path for this agent's crew configurations, creating the directory if it does not exist.
+        
+        Returns:
+            str: Absolute path to the crews configuration directory for the associated agent.
+        """
         from python.helpers import memory
         memory_dir = memory.get_memory_subdir_abs(self.agent)
         crews_dir = f"{memory_dir}/crews"
@@ -174,7 +209,12 @@ class CrewManager:
                     self.configs[config.name] = config
     
     def _save_config(self, config: CrewConfig):
-        """Save crew configuration to disk"""
+        """
+        Persist a CrewConfig to the agent's configs directory as a JSON file.
+        
+        Parameters:
+            config (CrewConfig): Crew configuration to serialize and save; written to a file named "<config.name>.json" inside the agent's crews configuration directory.
+        """
         configs_dir = self._get_configs_dir()
         filepath = os.path.join(configs_dir, f"{config.name}.json")
         
@@ -182,7 +222,12 @@ class CrewManager:
             json.dump(config.to_dict(), f, indent=2)
     
     def _get_llm(self):
-        """Get LLM configuration from Agent Zero"""
+        """
+        Return the model name to use for CrewAI agents.
+        
+        Returns:
+            str: The name of the Agent Zero chat model to be used by CrewAI.
+        """
         from python.helpers import call_llm
         
         # Use Agent Zero's LLM configuration
@@ -194,7 +239,20 @@ class CrewManager:
         return model_config.name
     
     def create_crew(self, config: CrewConfig) -> Crew:
-        """Create a Crew from configuration"""
+        """
+        Constructs a Crew instance from a CrewConfig.
+        
+        Converts each AgentConfig into a CrewAgent and each TaskConfig into a Task, applies the configured process mode and verbosity, and returns the assembled Crew. If a task references an agent role that is not present in the configuration, a ValueError is raised.
+        
+        Parameters:
+            config (CrewConfig): Configuration describing agents, tasks, process mode, and verbosity.
+        
+        Returns:
+            Crew: The instantiated Crew configured according to `config`.
+        
+        Raises:
+            ValueError: If a TaskConfig references an agent role that does not exist in `config.agents`.
+        """
         llm_name = self._get_llm()
         
         # Create agents
@@ -238,20 +296,44 @@ class CrewManager:
         return crew
     
     def save_config(self, config: CrewConfig):
-        """Save crew configuration"""
+        """
+        Store a CrewConfig in memory and persist it to the agent's configs directory.
+        
+        Parameters:
+            config (CrewConfig): Crew configuration to save; must have a unique `name` field. The configuration will be kept in the manager's in-memory registry and written to disk.
+        """
         self.configs[config.name] = config
         self._save_config(config)
     
     def get_config(self, name: str) -> Optional[CrewConfig]:
-        """Get crew configuration by name"""
+        """
+        Retrieve a stored crew configuration by its name.
+        
+        @returns The CrewConfig with the given name, or `None` if no matching configuration exists.
+        """
         return self.configs.get(name)
     
     def list_configs(self) -> List[CrewConfig]:
-        """List all crew configurations"""
+        """
+        Return all stored crew configurations.
+        
+        Returns:
+            configs (List[CrewConfig]): List of stored CrewConfig objects.
+        """
         return list(self.configs.values())
     
     def delete_config(self, name: str) -> bool:
-        """Delete crew configuration"""
+        """
+        Remove a saved crew configuration by name.
+        
+        If a configuration with the given name exists, it is removed from the in-memory store and its persisted JSON file is deleted if present.
+        
+        Parameters:
+            name (str): The name of the crew configuration to delete.
+        
+        Returns:
+            bool: `True` if a configuration was removed, `False` otherwise.
+        """
         if name in self.configs:
             del self.configs[name]
             
@@ -266,14 +348,25 @@ class CrewManager:
     
     async def run_crew(self, name: str, inputs: Optional[Dict] = None) -> Dict:
         """
-        Run a crew by name
+        Execute a named crew configuration and return a structured outcome of the run.
         
-        Args:
-            name: Name of the crew configuration
-            inputs: Optional inputs for the crew
+        Parameters:
+            name (str): Name of the saved crew configuration to execute.
+            inputs (Optional[Dict]): Optional inputs passed to the crew kickoff; defaults to an empty dict when omitted.
         
         Returns:
-            Dictionary with results and execution info
+            dict: Execution result containing:
+                - "success" (bool): `true` if the crew completed successfully, `false` otherwise.
+                - On success:
+                    - "result" (str): Stringified crew result.
+                    - "duration" (float): Execution time in seconds.
+                    - "crew_name" (str): The executed crew name.
+                - On failure:
+                    - "error" (str): Error message.
+                    - "crew_name" (str): The executed crew name.
+        
+        Raises:
+            ValueError: If no configuration exists with the given `name`.
         """
         config = self.get_config(name)
         if not config:
@@ -333,7 +426,12 @@ class CrewManager:
                 del self.active_crews[name]
     
     def get_active_crews(self) -> List[str]:
-        """Get list of currently running crews"""
+        """
+        Return the names of crews that are currently running.
+        
+        Returns:
+            list[str]: Names of active crews.
+        """
         return list(self.active_crews.keys())
 
 
