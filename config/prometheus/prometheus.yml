@@ -1,0 +1,97 @@
+# Prometheus Configuration for Agent Zero
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'agent-zero'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Node Exporter - system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'node-exporter'
+
+  # cAdvisor - container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: 'cadvisor'
+
+  # Netdata - real-time monitoring
+  - job_name: 'netdata'
+    static_configs:
+      - targets: ['netdata:19999']
+        labels:
+          service: 'netdata'
+    metrics_path: '/api/v1/allmetrics'
+    params:
+      format: ['prometheus']
+
+  # RabbitMQ metrics
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+        labels:
+          service: 'rabbitmq'
+    metrics_path: '/metrics'
+
+  # PostgreSQL metrics (requires postgres_exporter)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #       labels:
+  #         service: 'postgres'
+
+  # OpenSearch metrics
+  - job_name: 'opensearch'
+    static_configs:
+      - targets: ['opensearch:9200']
+        labels:
+          service: 'opensearch'
+    metrics_path: '/_prometheus/metrics'
+
+  # LiteLLM metrics (if exposed)
+  - job_name: 'litellm'
+    static_configs:
+      - targets: ['litellm:4000']
+        labels:
+          service: 'litellm'
+    metrics_path: '/metrics'
+
+  # Redis metrics (requires redis_exporter)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+  #       labels:
+  #         service: 'redis'
+
+  # Agent Zero application metrics (if exposed)
+  - job_name: 'agent-zero'
+    static_configs:
+      - targets: ['agent-zero:9091']
+        labels:
+          service: 'agent-zero'
+    metrics_path: '/metrics'

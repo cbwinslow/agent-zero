@@ -1,0 +1,84 @@
+# Prometheus Alert Rules for Agent Zero
+groups:
+  - name: agent_zero_alerts
+    interval: 30s
+    rules:
+      # High CPU usage alert
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}"
+
+      # High memory usage alert
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% on {{ $labels.instance }}"
+
+      # Container down alert
+      - alert: ContainerDown
+        expr: up{job="cadvisor"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container monitoring is down"
+          description: "cAdvisor has been down for more than 2 minutes"
+
+      # High disk usage alert
+      - alert: HighDiskUsage
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is below 15% on {{ $labels.instance }}"
+
+      # RabbitMQ queue depth alert
+      - alert: HighRabbitMQQueueDepth
+        expr: rabbitmq_queue_messages > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RabbitMQ queue depth"
+          description: "RabbitMQ queue {{ $labels.queue }} has more than 1000 messages"
+
+      # PostgreSQL down alert
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database has been down for more than 1 minute"
+
+      # OpenSearch cluster health
+      - alert: OpenSearchClusterNotHealthy
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpenSearch cluster health is red"
+          description: "OpenSearch cluster health has been red for more than 5 minutes"
+
+      # High request rate to LiteLLM
+      - alert: HighLiteLLMRequestRate
+        expr: rate(http_requests_total{job="litellm"}[5m]) > 100
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "High request rate to LiteLLM"
+          description: "LiteLLM is receiving more than 100 requests per second"

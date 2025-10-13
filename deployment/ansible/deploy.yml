@@ -1,0 +1,185 @@
+---
+# Ansible Playbook for deploying Agent Zero to remote servers
+# Usage: ansible-playbook -i inventory.ini deploy.yml
+
+- name: Deploy Agent Zero with Monitoring Stack
+  hosts: agent_zero_servers
+  become: yes
+  vars:
+    agent_zero_path: /opt/agent-zero
+    agent_zero_user: agent-zero
+    agent_zero_group: agent-zero
+    
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+          - git
+          - python3
+          - python3-pip
+          - curl
+          - vim
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Create agent-zero user
+      user:
+        name: "{{ agent_zero_user }}"
+        group: "{{ agent_zero_group }}"
+        groups: docker
+        append: yes
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Create Agent Zero directory
+      file:
+        path: "{{ agent_zero_path }}"
+        state: directory
+        owner: "{{ agent_zero_user }}"
+        group: "{{ agent_zero_group }}"
+        mode: '0755'
+
+    - name: Clone Agent Zero repository
+      git:
+        repo: https://github.com/agent0ai/agent-zero.git
+        dest: "{{ agent_zero_path }}"
+        version: main
+        force: yes
+      become_user: "{{ agent_zero_user }}"
+
+    - name: Copy environment file template
+      copy:
+        src: "{{ agent_zero_path }}/example.env"
+        dest: "{{ agent_zero_path }}/.env"
+        remote_src: yes
+        owner: "{{ agent_zero_user }}"
+        group: "{{ agent_zero_group }}"
+        mode: '0600'
+        force: no
+
+    - name: Update .env with provided variables
+      lineinfile:
+        path: "{{ agent_zero_path }}/.env"
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
+      with_items:
+        - { key: 'API_KEY_OPENAI', value: "{{ openai_api_key | default('') }}" }
+        - { key: 'API_KEY_ANTHROPIC', value: "{{ anthropic_api_key | default('') }}" }
+        - { key: 'GRAFANA_ADMIN_PASSWORD', value: "{{ grafana_password | default('admin') }}" }
+        - { key: 'POSTGRES_PASSWORD', value: "{{ postgres_password | default('postgres') }}" }
+        - { key: 'RABBITMQ_PASSWORD', value: "{{ rabbitmq_password | default('admin') }}" }
+        - { key: 'REDIS_PASSWORD', value: "{{ redis_password | default('redis123') }}" }
+      no_log: yes
+
+    - name: Create required directories
+      file:
+        path: "{{ agent_zero_path }}/{{ item }}"
+        state: directory
+        owner: "{{ agent_zero_user }}"
+        group: "{{ agent_zero_group }}"
+        mode: '0755'
+      loop:
+        - logs
+        - memory
+        - knowledge
+        - backups
+
+    - name: Pull Docker images
+      command: docker-compose -f {{ agent_zero_path }}/docker-compose.production.yml pull
+      become_user: "{{ agent_zero_user }}"
+      args:
+        chdir: "{{ agent_zero_path }}"
+
+    - name: Start Agent Zero services
+      command: docker-compose -f {{ agent_zero_path }}/docker-compose.production.yml up -d
+      become_user: "{{ agent_zero_user }}"
+      args:
+        chdir: "{{ agent_zero_path }}"
+
+    - name: Copy systemd service file
+      template:
+        src: templates/agent-zero.service.j2
+        dest: /etc/systemd/system/agent-zero.service
+        mode: '0644'
+
+    - name: Enable and start Agent Zero service
+      systemd:
+        name: agent-zero
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Configure firewall rules (UFW)
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - '50001'  # Agent Zero UI
+        - '3001'   # Grafana
+        - '9090'   # Prometheus
+        - '3000'   # Langfuse
+        - '4000'   # LiteLLM
+      when: ansible_os_family == "Debian"
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+      when: ansible_os_family == "Debian"
+
+    - name: Wait for services to be ready
+      wait_for:
+        port: "{{ item }}"
+        delay: 5
+        timeout: 300
+      loop:
+        - 50001
+        - 3001
+        - 9090
+
+    - name: Display access information
+      debug:
+        msg:
+          - "Agent Zero deployment complete!"
+          - "Access points:"
+          - "  Agent Zero UI: http://{{ ansible_host }}:50001"
+          - "  Grafana: http://{{ ansible_host }}:3001 (admin/{{ grafana_password | default('admin') }})"
+          - "  Prometheus: http://{{ ansible_host }}:9090"
+          - "  Langfuse: http://{{ ansible_host }}:3000"
+          - "  LiteLLM: http://{{ ansible_host }}:4000"
+
+- name: Configure monitoring alerts
+  hosts: agent_zero_servers
+  become: yes
+  tasks:
+    - name: Install monitoring scripts
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: '0755'
+      loop:
+        - { src: 'scripts/health-check.sh', dest: '/usr/local/bin/agent-zero-health' }
+        - { src: 'scripts/backup.sh', dest: '/usr/local/bin/agent-zero-backup' }
+
+    - name: Setup daily backup cron
+      cron:
+        name: "Agent Zero daily backup"
+        minute: "0"
+        hour: "2"
+        job: "/usr/local/bin/agent-zero-backup"
+        user: "{{ agent_zero_user }}"
+
+    - name: Setup health check cron
+      cron:
+        name: "Agent Zero health check"
+        minute: "*/15"
+        job: "/usr/local/bin/agent-zero-health"
+        user: "{{ agent_zero_user }}"

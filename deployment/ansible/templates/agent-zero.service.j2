@@ -1,0 +1,36 @@
+[Unit]
+Description=Agent Zero AI Assistant with Monitoring Stack
+Requires=docker.service
+After=docker.service
+Documentation=https://github.com/agent0ai/agent-zero
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory={{ agent_zero_path }}
+User={{ agent_zero_user }}
+Group={{ agent_zero_group }}
+
+# Start command
+ExecStart=/usr/bin/docker-compose -f {{ agent_zero_path }}/docker-compose.production.yml up -d
+
+# Stop command
+ExecStop=/usr/bin/docker-compose -f {{ agent_zero_path }}/docker-compose.production.yml down
+
+# Restart command
+ExecReload=/usr/bin/docker-compose -f {{ agent_zero_path }}/docker-compose.production.yml restart
+
+# Restart policy
+Restart=on-failure
+RestartSec=30
+
+# Security settings
+PrivateTmp=yes
+NoNewPrivileges=true
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
