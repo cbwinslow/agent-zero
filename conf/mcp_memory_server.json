@@ -1,0 +1,11 @@
+{
+  "name": "memory-manager",
+  "description": "Agent Zero Memory Management Server - Manages memories, knowledge base, and agent rules",
+  "type": "stdio",
+  "command": "python",
+  "args": ["/a0/run_memory_mcp.py"],
+  "env": {
+    "MEMORY_MCP_HOST": "localhost",
+    "MEMORY_MCP_PORT": "3001"
+  }
+}
