@@ -336,7 +336,7 @@ async def get_agent_rules(
 
 @memory_mcp.tool(
     name="compress_memories",
-    description="Compress and consolidate memories to reduce redundancy",
+    description="Compress and consolidate memories to reduce redundancy using intelligent similarity analysis",
 )
 async def compress_memories(
     memory_subdir: Annotated[
@@ -344,22 +344,99 @@ async def compress_memories(
         Field(description="Memory subdirectory to compress (default: 'default')"),
     ] = None,
     threshold: Annotated[float, Field(description="Similarity threshold for consolidation", ge=0, le=1)] = 0.9,
+    max_results: Annotated[int, Field(description="Maximum number of memories to process", ge=1, le=1000)] = 100,
 ) -> MemoryResponse | MemoryError:
-    """Compress and consolidate similar memories"""
+    """
+    Compress and consolidate similar memories
+    
+    This function:
+    1. Retrieves all memories from the specified area
+    2. Groups similar memories based on threshold
+    3. Consolidates duplicates and near-duplicates
+    4. Preserves unique information
+    """
     try:
-        # This is a placeholder for memory compression logic
-        # In a production system, this would:
-        # 1. Find similar memories
-        # 2. Merge them intelligently
-        # 3. Remove redundant entries
-        # 4. Preserve important information
-        
         mem_subdir = memory_subdir or "default"
         _PRINTER.print(f"Compressing memories in: {mem_subdir}")
         
+        # Get memory instance
+        memory = await Memory.get_by_subdir(mem_subdir)
+        
+        # Get all documents
+        all_docs = memory.db.get_all_docs()
+        
+        if not all_docs:
+            return MemoryResponse(
+                message="No memories to compress",
+                data={"compressed": 0, "removed": 0}
+            )
+        
+        # Track statistics
+        compressed_count = 0
+        removed_count = 0
+        groups_processed = 0
+        
+        # Convert to list for processing
+        docs_list = list(all_docs.values())[:max_results]
+        processed_ids = set()
+        
+        _PRINTER.print(f"Processing {len(docs_list)} memories for compression")
+        
+        # Process each document
+        for i, doc in enumerate(docs_list):
+            if doc.metadata["id"] in processed_ids:
+                continue
+                
+            # Find similar memories
+            similar_docs = await memory.search_similarity_threshold(
+                query=doc.page_content,
+                limit=10,
+                threshold=threshold,
+                filter=""
+            )
+            
+            # Filter out the document itself and already processed
+            similar_docs = [
+                d for d in similar_docs 
+                if d.metadata["id"] != doc.metadata["id"] 
+                and d.metadata["id"] not in processed_ids
+            ]
+            
+            if similar_docs:
+                # Mark all as processed
+                processed_ids.add(doc.metadata["id"])
+                for similar_doc in similar_docs:
+                    processed_ids.add(similar_doc.metadata["id"])
+                
+                # Simple consolidation: keep the longest/most comprehensive version
+                all_versions = [doc] + similar_docs
+                longest = max(all_versions, key=lambda d: len(d.page_content))
+                
+                # Remove all except the longest
+                ids_to_remove = [
+                    d.metadata["id"] for d in all_versions 
+                    if d.metadata["id"] != longest.metadata["id"]
+                ]
+                
+                if ids_to_remove:
+                    await memory.delete_documents_by_ids(ids_to_remove)
+                    removed_count += len(ids_to_remove)
+                    compressed_count += 1
+                    groups_processed += 1
+                    
+                    _PRINTER.print(
+                        f"Compressed {len(ids_to_remove)} similar memories into 1 "
+                        f"(group {groups_processed})"
+                    )
+        
         return MemoryResponse(
-            message="Memory compression completed",
-            data={"compressed": True, "threshold": threshold}
+            message=f"Memory compression completed: {compressed_count} groups consolidated, {removed_count} memories removed",
+            data={
+                "groups_compressed": compressed_count,
+                "memories_removed": removed_count,
+                "groups_processed": groups_processed,
+                "threshold": threshold
+            }
         )
     except Exception as e:
         _PRINTER.print(f"Error compressing memories: {e}")
