@@ -6,3 +6,32 @@ services:
       - ./agent-zero:/a0
     ports:
       - "50080:80"
+    environment:
+      - MEMORY_MCP_HOST=${MEMORY_MCP_HOST:-memory-mcp}
+      - MEMORY_MCP_PORT=${MEMORY_MCP_PORT:-3001}
+      - MEMORY_MCP_ENABLED=${MEMORY_MCP_ENABLED:-true}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - MULTI_AGENT_ENABLED=${MULTI_AGENT_ENABLED:-true}
+      - MAX_SUB_AGENTS=${MAX_SUB_AGENTS:-5}
+    depends_on:
+      - memory-mcp
+    networks:
+      - agent-zero-network
+
+  memory-mcp:
+    container_name: agent-zero-memory-mcp
+    image: agent0ai/agent-zero:latest
+    volumes:
+      - ./agent-zero:/a0
+    ports:
+      - "3001:3001"
+    environment:
+      - MEMORY_MCP_HOST=0.0.0.0
+      - MEMORY_MCP_PORT=3001
+    command: ["python", "/a0/run_memory_mcp.py"]
+    networks:
+      - agent-zero-network
+
+networks:
+  agent-zero-network:
+    driver: bridge

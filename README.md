@@ -68,11 +68,15 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - **Creating Custom Tools:** Extend Agent Zero's functionality by creating your own custom tools.
 - **Instruments:** Instruments are a new type of tool that allow you to create custom functions and procedures that can be called by Agent Zero.
 
-3. **Multi-agent Cooperation**
+3. **Advanced Multi-agent System with Memory Management**
 
-- Every agent has a superior agent giving it tasks and instructions. Every agent then reports back to its superior.
-- In the case of the first agent in the chain (Agent 0), the superior is the human user; the agent sees no difference.
-- Every agent can create its subordinate agent to help break down and solve subtasks. This helps all agents keep their context clean and focused.
+- **Multi-Agent Coordination**: Agent Zero now features specialized sub-agents (researcher, developer, analyst, planner, executor) that work together on complex tasks
+- **Memory MCP Server**: Dedicated server for managing memories, knowledge base, and agent rules with semantic search
+- **Knowledge Organization**: Structured knowledge base with areas for main knowledge, code fragments, solutions, and tools
+- **Adaptive Coordination**: Intelligent task distribution across agents using sequential, parallel, or adaptive strategies
+- **OpenRouter Integration**: Pre-configured support for OpenRouter SDK providing access to multiple LLM providers
+- **Agent Hierarchy**: Every agent has a superior giving tasks and instructions, with subordinates helping break down complex problems
+- See [Multi-Agent Memory System Guide](./QUICK_START_MULTI_AGENT.md) for quick setup
 
 ![Multi-agent](docs/res/physics.png)
 ![Multi-agent 2](docs/res/physics-2.png)
