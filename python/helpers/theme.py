@@ -384,30 +384,27 @@ class ThemeManager:
     
     def _load_theme(self) -> Theme:
         """Load theme from configuration file or use default"""
-        if os.path.exists(self.config_path):
-            try:
-                with open(self.config_path, 'r') as f:
-                    data = json.load(f)
-                
-                # Reconstruct ColorPalette from saved data
-                palette_data = data.get('palette', {})
-                palette = ColorPalette(**palette_data)
-                
-                # Reconstruct Theme
-                theme = Theme(
-                    name=data.get('name', 'custom'),
-                    palette=palette,
-                    bold_headings=data.get('bold_headings', True),
-                    italic_thoughts=data.get('italic_thoughts', True),
-                    underline_links=data.get('underline_links', True),
-                    padding_messages=data.get('padding_messages', True),
-                    show_timestamps=data.get('show_timestamps', False),
-                )
-                return theme
-            except Exception as e:
-                print(f"Warning: Failed to load theme configuration: {e}")
-                return self._get_default_theme()
-        else:
+        try:
+            with open(self.config_path, 'r') as f:
+                data = json.load(f)
+            
+            # Reconstruct ColorPalette from saved data
+            palette_data = data.get('palette', {})
+            palette = ColorPalette(**palette_data)
+            
+            # Reconstruct Theme
+            theme = Theme(
+                name=data.get('name', 'custom'),
+                palette=palette,
+                bold_headings=data.get('bold_headings', True),
+                italic_thoughts=data.get('italic_thoughts', True),
+                underline_links=data.get('underline_links', True),
+                padding_messages=data.get('padding_messages', True),
+                show_timestamps=data.get('show_timestamps', False),
+            )
+            return theme
+        except (FileNotFoundError, json.JSONDecodeError, TypeError) as e:
+            print(f"Warning: Failed to load theme configuration: {e}")
             return self._get_default_theme()
     
     def _get_default_theme(self) -> Theme:
