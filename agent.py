@@ -27,19 +27,55 @@ from typing import Callable
 from python.helpers.localization import Localization
 from python.helpers.extension import call_extensions
 from python.helpers.errors import RepairableException
+from python.helpers import error_tracker, memory_monitor
 
 
 class AgentContextType(Enum):
+    """
+    Enum defining the types of agent contexts.
+    
+    Agent contexts can be:
+    - USER: Interactive user-facing context (default for web/terminal UI)
+    - TASK: Background task context for automated processes
+    - BACKGROUND: Background processing context for async operations
+    """
     USER = "user"
     TASK = "task"
     BACKGROUND = "background"
 
 
 class AgentContext:
+    """
+    Represents the execution context for an agent.
+    
+    An AgentContext manages:
+    - Agent instances and their lifecycle
+    - Conversation history and logging
+    - Task execution and management
+    - Message streaming and processing
+    - Context persistence and serialization
+    
+    Each context has a unique ID and can contain multiple agent instances
+    (main agent and subordinates). Contexts are stored globally and can be
+    retrieved by ID for long-running conversations.
+    
+    Attributes:
+        id: Unique context identifier
+        name: Human-readable context name
+        config: Agent configuration
+        log: Logging instance for this context
+        agent0: Main agent instance
+        paused: Whether the context is paused
+        streaming_agent: Currently streaming agent (if any)
+        task: Current deferred task (if any)
+        created_at: Timestamp when context was created
+        type: Context type (USER, TASK, or BACKGROUND)
+        last_message: Timestamp of last message
+    """
 
-    _contexts: dict[str, "AgentContext"] = {}
-    _counter: int = 0
-    _notification_manager = None
+    _contexts: dict[str, "AgentContext"] = {}  # Global registry of all contexts
+    _counter: int = 0  # Counter for context numbering
+    _notification_manager = None  # Shared notification manager instance
 
     def __init__(
         self,
@@ -54,6 +90,28 @@ class AgentContext:
         type: AgentContextType = AgentContextType.USER,
         last_message: datetime | None = None,
     ):
+        """
+        Initialize a new agent context.
+        
+        This constructor:
+        1. Generates or assigns a unique context ID
+        2. Initializes the main agent (agent0) if not provided
+        3. Sets up logging for this context
+        4. Registers the context in the global registry
+        5. Sets up timing and type metadata
+        
+        Args:
+            config: Configuration for the agent(s) in this context
+            id: Optional custom ID (auto-generated if not provided)
+            name: Optional human-readable name for the context
+            agent0: Optional pre-initialized main agent
+            log: Optional logging instance
+            paused: Whether to start in paused state
+            streaming_agent: Currently streaming agent reference
+            created_at: Creation timestamp (defaults to now)
+            type: Context type (USER, TASK, or BACKGROUND)
+            last_message: Timestamp of last message (defaults to now)
+        """
         # build context
         self.id = id or AgentContext.generate_id()
         self.name = name
@@ -225,6 +283,35 @@ class AgentContext:
 
 @dataclass
 class AgentConfig:
+    """
+    Configuration for an agent instance.
+    
+    This dataclass contains all configuration parameters needed to initialize
+    and run an agent, including:
+    - Model configurations (chat, utility, embeddings, browser)
+    - MCP server configuration
+    - Agent profile and memory settings
+    - Knowledge base directories
+    - Browser settings
+    - Code execution settings (SSH/Docker)
+    
+    Attributes:
+        chat_model: Configuration for the main chat/reasoning model
+        utility_model: Configuration for utility tasks (summarization, etc.)
+        embeddings_model: Configuration for embeddings/semantic search
+        browser_model: Configuration for browser automation model
+        mcp_servers: MCP servers configuration string/path
+        profile: Agent profile name (for custom prompts/tools)
+        memory_subdir: Subdirectory for agent's memory storage
+        knowledge_subdirs: List of knowledge base subdirectories
+        browser_http_headers: Custom HTTP headers for browser requests
+        code_exec_ssh_enabled: Whether SSH code execution is enabled
+        code_exec_ssh_addr: SSH server address
+        code_exec_ssh_port: SSH server port
+        code_exec_ssh_user: SSH username
+        code_exec_ssh_pass: SSH password
+        additional: Additional custom configuration parameters
+    """
     chat_model: models.ModelConfig
     utility_model: models.ModelConfig
     embeddings_model: models.ModelConfig
@@ -244,13 +331,52 @@ class AgentConfig:
 
 @dataclass
 class UserMessage:
+    """
+    Represents a message from the user to the agent.
+    
+    This dataclass encapsulates all information associated with a user message:
+    - The actual message text
+    - Any file attachments
+    - System-level messages/instructions
+    
+    Attributes:
+        message: The user's message text
+        attachments: List of file paths or attachment identifiers
+        system_message: List of system-level messages/instructions to prepend
+    """
     message: str
     attachments: list[str] = field(default_factory=list[str])
     system_message: list[str] = field(default_factory=list[str])
 
 
 class LoopData:
+    """
+    Data container for agent message loop execution.
+    
+    This class holds all state and data for a single iteration of the agent's
+    message processing loop. It's passed to extensions and used throughout
+    the agent's reasoning cycle.
+    
+    Attributes:
+        iteration: Current iteration number in the message loop
+        system: List of system prompt components
+        user_message: The current user message being processed
+        history_output: Formatted history messages for LLM input
+        extras_temporary: Temporary extra context (cleared each iteration)
+        extras_persistent: Persistent extra context (kept across iterations)
+        last_response: The previous agent response
+        params_temporary: Temporary parameters (cleared each iteration)
+        params_persistent: Persistent parameters (kept across iterations)
+    """
     def __init__(self, **kwargs):
+        """
+        Initialize loop data with default values.
+        
+        Default values can be overridden by passing them as keyword arguments.
+        
+        Args:
+            **kwargs: Optional values to override defaults
+        """
         self.iteration = -1
         self.system = []
         self.user_message: history.Message | None = None
@@ -268,25 +394,95 @@ class LoopData:
 
 # intervention exception class - skips rest of message loop iteration
 class InterventionException(Exception):
+    """
+    Exception raised when user intervention is detected.
+    
+    This exception is raised when the user sends an intervention message
+    while the agent is processing. It causes the current message loop
+    iteration to be interrupted and restarted with the intervention message.
+    
+    This allows users to course-correct the agent's behavior in real-time
+    without waiting for the current operation to complete.
+    """
     pass
 
 
 # killer exception class - not forwarded to LLM, cannot be fixed on its own, ends message loop
-
-
 class HandledException(Exception):
+    """
+    Exception wrapper for errors that have already been handled.
+    
+    This exception is raised to terminate the message loop after a critical
+    error has been logged, displayed to the user, and handled appropriately.
+    It prevents the error from being caught and re-processed by outer
+    exception handlers.
+    
+    When this exception is raised, the agent's message loop will terminate
+    cleanly without attempting further recovery.
+    """
     pass
 
 
 class Agent:
+    """
+    Core agent class implementing the Agent Zero framework.
+    
+    An Agent represents an autonomous AI entity capable of:
+    - Reasoning through complex tasks
+    - Using tools to accomplish goals
+    - Managing conversation history and context
+    - Coordinating with subordinate agents
+    - Learning from past experiences through memory
+    
+    The agent operates through a message loop:
+    1. Receives user input or task from superior
+    2. Processes the input and forms a plan
+    3. Executes tools as needed (code, search, delegation, etc.)
+    4. Responds to user or returns results to superior
+    5. Repeats until task is complete
+    
+    Key features:
+    - Extensible through prompts (no hard-coded behavior)
+    - Tool usage via JSON parsing
+    - Memory and knowledge management
+    - Multi-agent coordination
+    - Real-time streaming output
+    - Intervention support for user course-correction
+    
+    Attributes:
+        config: Agent configuration
+        context: Execution context (shared with other agents)
+        number: Agent number in hierarchy (0 = main agent)
+        agent_name: Display name (e.g., "A0", "A1")
+        history: Conversation history manager
+        last_user_message: Most recent user message
+        intervention: Pending intervention message (if any)
+        data: Free-form data storage for tools and extensions
+    """
 
-    DATA_NAME_SUPERIOR = "_superior"
-    DATA_NAME_SUBORDINATE = "_subordinate"
-    DATA_NAME_CTX_WINDOW = "ctx_window"
+    # Data field name constants
+    DATA_NAME_SUPERIOR = "_superior"  # Reference to superior agent
+    DATA_NAME_SUBORDINATE = "_subordinate"  # Reference to subordinate agent
+    DATA_NAME_CTX_WINDOW = "ctx_window"  # Context window content and size
 
     def __init__(
         self, number: int, config: AgentConfig, context: AgentContext | None = None
     ):
+        """
+        Initialize a new agent instance.
+        
+        This constructor:
+        1. Sets up agent configuration and context
+        2. Assigns agent number and display name
+        3. Initializes conversation history
+        4. Sets up data storage for tools/extensions
+        5. Calls agent initialization extensions
+        
+        Args:
+            number: Agent number in hierarchy (0 for main agent)
+            config: Agent configuration
+            context: Optional execution context (created if not provided)
+        """
 
         # agent config
         self.config = config
@@ -306,6 +502,32 @@ class Agent:
         asyncio.run(self.call_extensions("agent_init"))
 
     async def monologue(self):
+        """
+        Main agent reasoning and execution loop.
+        
+        This is the core of the agent's autonomous behavior. The agent:
+        1. Processes the current user message or task
+        2. Reasons about what to do next
+        3. Executes tools as needed
+        4. Generates responses
+        5. Continues until the task is complete
+        
+        The loop handles:
+        - Extension points for customization
+        - User interventions for course correction
+        - Error recovery (repairable errors forwarded to LLM)
+        - Response streaming for real-time output
+        - Tool execution and result processing
+        - Context window management
+        
+        The loop continues indefinitely until:
+        - A response tool breaks the loop
+        - An unrecoverable error occurs
+        - The context is terminated
+        
+        Returns:
+            The final response message (if any)
+        """
         while True:
             try:
                 # loop data dictionary to pass to extensions
@@ -485,6 +707,18 @@ class Agent:
         return full_prompt
 
     def handle_critical_exception(self, exception: Exception):
+        """
+        Handle critical exceptions in the agent's execution.
+        
+        This method:
+        1. Logs the error to the error tracking system
+        2. Attempts to find similar errors and their solutions
+        3. Displays error information to the user
+        4. Re-raises the exception to terminate the loop
+        
+        Args:
+            exception: The exception that occurred
+        """
         if isinstance(exception, HandledException):
             raise exception  # Re-raise the exception to kill the loop
         elif isinstance(exception, asyncio.CancelledError):
@@ -500,13 +734,40 @@ class Agent:
             error_text = errors.error_text(exception)
             error_message = errors.format_error(exception)
 
+            # Log error to tracking system with context
+            error_context = {
+                "agent_name": self.agent_name,
+                "agent_number": self.number,
+                "context_id": self.context.id,
+                "loop_iteration": getattr(self, 'loop_data', None) and self.loop_data.iteration or -1,
+            }
+            error_id = error_tracker.log_error(exception, context=error_context)
+            
+            # Try to find similar errors and their solutions
+            similar_errors = error_tracker.find_similar_errors(exception, limit=3)
+            if similar_errors:
+                PrintStyle(font_color="yellow", padding=True).print(
+                    f"Found {len(similar_errors)} similar error(s) in history (Error ID: {error_id})"
+                )
+                
+                # Check if any similar errors have solutions
+                solutions = error_tracker.get_solutions(exception)
+                if solutions:
+                    PrintStyle(font_color="cyan", padding=True).print(
+                        f"Possible solution from previous occurrence:"
+                    )
+                    for idx, sol in enumerate(solutions[:2], 1):  # Show top 2 solutions
+                        PrintStyle(font_color="cyan", padding=False).print(
+                            f"  {idx}. {sol.get('solution', 'No solution description')}"
+                        )
+
             # Mask secrets in error messages
             PrintStyle(font_color="red", padding=True).print(error_message)
             self.context.log.log(
                 type="error",
                 heading="Error",
                 content=error_message,
-                kvps={"text": error_text},
+                kvps={"text": error_text, "error_id": error_id},
             )
             PrintStyle(font_color="red", padding=True).print(
                 f"{self.agent_name}: {error_text}"
@@ -562,6 +823,22 @@ class Agent:
         return self.history.add_message(ai=ai, content=content_data["content"], tokens=tokens)
 
     def hist_add_user_message(self, message: UserMessage, intervention: bool = False):
+        """
+        Add a user message to the history.
+        
+        This method:
+        1. Starts a new topic in the conversation history
+        2. Formats the message using the appropriate template
+        3. Adds the message to the history
+        4. Broadcasts the event to the memory monitor for automatic memory management
+        
+        Args:
+            message: The user message to add
+            intervention: Whether this is an intervention message
+            
+        Returns:
+            The created Message object
+        """
         self.history.new_topic()  # user message starts a new topic in history
 
         # load message template based on intervention
@@ -587,11 +864,65 @@ class Agent:
         # add to history
         msg = self.hist_add_message(False, content=content)  # type: ignore
         self.last_user_message = msg
+        
+        # Broadcast to memory monitor for automatic memory management
+        try:
+            memory_monitor.broadcast_conversation_event(
+                speaker="user",
+                message=message.message,
+                context={
+                    "agent_number": self.number,
+                    "intervention": intervention,
+                    "attachments": message.attachments,
+                },
+                agent_name=self.agent_name,
+                context_id=self.context.id
+            )
+        except Exception as e:
+            # Don't let memory monitoring failures break the main flow
+            PrintStyle(font_color="yellow", padding=True).print(
+                f"Memory monitor broadcast failed: {e}"
+            )
+        
         return msg
 
     def hist_add_ai_response(self, message: str):
+        """
+        Add an AI response to the history.
+        
+        This method:
+        1. Updates the last response in loop data
+        2. Formats the message using the AI response template
+        3. Adds the message to the history
+        4. Broadcasts the event to the memory monitor for automatic memory management
+        
+        Args:
+            message: The AI response message
+            
+        Returns:
+            The created Message object
+        """
         self.loop_data.last_response = message
         content = self.parse_prompt("fw.ai_response.md", message=message)
+        
+        # Broadcast to memory monitor for automatic memory management
+        try:
+            memory_monitor.broadcast_conversation_event(
+                speaker="agent",
+                message=message,
+                context={
+                    "agent_number": self.number,
+                    "loop_iteration": self.loop_data.iteration,
+                },
+                agent_name=self.agent_name,
+                context_id=self.context.id
+            )
+        except Exception as e:
+            # Don't let memory monitoring failures break the main flow
+            PrintStyle(font_color="yellow", padding=True).print(
+                f"Memory monitor broadcast failed: {e}"
+            )
+        
         return self.hist_add_message(True, content=content)
 
     def hist_add_warning(self, message: history.MessageContent):
