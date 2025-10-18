@@ -271,7 +271,7 @@ python examples/github_issue_workflow.py --example review
 **Documentation (3 files):**
 8. `docs/github_operations.md` - Complete operations guide (463 lines)
 9. `docs/github_integration_guide.md` - Integration guide (415 lines)
-10. `GITHUB_OPERATIONS_SUMMARY.md` - This summary (400+ lines)
+10. `GITHUB_OPERATIONS_SUMMARY.md` - This summary (356 lines)
 
 **Examples (3 files):**
 11. `examples/github_issue_workflow.py` - Issue management examples (211 lines)
