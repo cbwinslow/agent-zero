@@ -14,7 +14,7 @@ Features:
 
 import json
 import os
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from dataclasses import dataclass, asdict, field
 from enum import Enum
 from python.helpers import files
@@ -188,6 +188,66 @@ class ThemeManager:
             reference="#8B008B",
         ),
         
+        ThemeName.SOLARIZED_DARK: ColorPalette(
+            primary="#268BD2",  # Solarized blue
+            secondary="#859900",  # Solarized green
+            accent="#CB4B16",  # Solarized orange
+            background="#002B36",  # Solarized base03
+            foreground="#839496",  # Solarized base0
+            user_message="#268BD2",
+            agent_message="#859900",
+            system_message="#B58900",  # Solarized yellow
+            success="#859900",
+            warning="#CB4B16",
+            error="#DC322F",  # Solarized red
+            info="#268BD2",
+            debug="#586E75",  # Solarized base01
+            tool_execution="#6C71C4",  # Solarized violet
+            code_execution="#2AA198",  # Solarized cyan
+            code_output="#93A1A1",  # Solarized base1
+            memory_save="#D33682",  # Solarized magenta
+            memory_load="#6C71C4",
+            knowledge="#B58900",
+            reasoning="#859900",
+            thoughts="#268BD2",
+            highlight="#B58900",
+            emphasis="#D33682",
+            border="#073642",  # Solarized base02
+            separator="#586E75",
+            link="#2AA198",
+            reference="#6C71C4",
+        ),
+        
+        ThemeName.SOLARIZED_LIGHT: ColorPalette(
+            primary="#268BD2",  # Solarized blue
+            secondary="#859900",  # Solarized green
+            accent="#CB4B16",  # Solarized orange
+            background="#FDF6E3",  # Solarized base3
+            foreground="#657B83",  # Solarized base00
+            user_message="#268BD2",
+            agent_message="#859900",
+            system_message="#B58900",  # Solarized yellow
+            success="#859900",
+            warning="#CB4B16",
+            error="#DC322F",  # Solarized red
+            info="#268BD2",
+            debug="#93A1A1",  # Solarized base1
+            tool_execution="#6C71C4",  # Solarized violet
+            code_execution="#2AA198",  # Solarized cyan
+            code_output="#586E75",  # Solarized base01
+            memory_save="#D33682",  # Solarized magenta
+            memory_load="#6C71C4",
+            knowledge="#B58900",
+            reasoning="#859900",
+            thoughts="#268BD2",
+            highlight="#B58900",
+            emphasis="#D33682",
+            border="#EEE8D5",  # Solarized base2
+            separator="#93A1A1",
+            link="#2AA198",
+            reference="#6C71C4",
+        ),
+        
         ThemeName.MONOKAI: ColorPalette(
             primary="#66D9EF",  # Monokai blue
             secondary="#A6E22E",  # Monokai green
@@ -276,6 +336,36 @@ class ThemeManager:
             separator="#4C566A",
             link="#88C0D0",
             reference="#B48EAD",
+        ),
+        
+        ThemeName.GRUVBOX: ColorPalette(
+            primary="#83A598",  # Gruvbox blue
+            secondary="#B8BB26",  # Gruvbox green
+            accent="#FABD2F",  # Gruvbox yellow
+            background="#282828",  # Gruvbox dark background
+            foreground="#EBDBB2",  # Gruvbox foreground
+            user_message="#83A598",
+            agent_message="#B8BB26",
+            system_message="#FABD2F",
+            success="#B8BB26",
+            warning="#FE8019",  # Gruvbox orange
+            error="#FB4934",  # Gruvbox red
+            info="#83A598",
+            debug="#928374",  # Gruvbox gray
+            tool_execution="#D3869B",  # Gruvbox purple
+            code_execution="#8EC07C",  # Gruvbox aqua
+            code_output="#D5C4A1",  # Gruvbox light foreground
+            memory_save="#FB4934",
+            memory_load="#D3869B",
+            knowledge="#FABD2F",
+            reasoning="#B8BB26",
+            thoughts="#83A598",
+            highlight="#FABD2F",
+            emphasis="#FB4934",
+            border="#3C3836",
+            separator="#665C54",
+            link="#8EC07C",
+            reference="#D3869B",
         ),
     }
     
@@ -394,7 +484,7 @@ class ThemeManager:
         """
         return getattr(self.current_theme.palette, component, "#FFFFFF")
     
-    def list_themes(self) -> list[str]:
+    def list_themes(self) -> List[str]:
         """Get list of available theme names"""
         return [theme.value for theme in ThemeName if theme != ThemeName.CUSTOM]
     
