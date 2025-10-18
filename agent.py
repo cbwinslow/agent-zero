@@ -27,7 +27,7 @@ from typing import Callable
 from python.helpers.localization import Localization
 from python.helpers.extension import call_extensions
 from python.helpers.errors import RepairableException
-from python.helpers import error_tracker
+from python.helpers import error_tracker, memory_monitor
 
 
 class AgentContextType(Enum):
@@ -602,6 +602,22 @@ class Agent:
         return self.history.add_message(ai=ai, content=content_data["content"], tokens=tokens)
 
     def hist_add_user_message(self, message: UserMessage, intervention: bool = False):
+        """
+        Add a user message to the history.
+        
+        This method:
+        1. Starts a new topic in the conversation history
+        2. Formats the message using the appropriate template
+        3. Adds the message to the history
+        4. Broadcasts the event to the memory monitor for automatic memory management
+        
+        Args:
+            message: The user message to add
+            intervention: Whether this is an intervention message
+            
+        Returns:
+            The created Message object
+        """
         self.history.new_topic()  # user message starts a new topic in history
 
         # load message template based on intervention
@@ -627,11 +643,65 @@ class Agent:
         # add to history
         msg = self.hist_add_message(False, content=content)  # type: ignore
         self.last_user_message = msg
+        
+        # Broadcast to memory monitor for automatic memory management
+        try:
+            memory_monitor.broadcast_conversation_event(
+                speaker="user",
+                message=message.message,
+                context={
+                    "agent_number": self.number,
+                    "intervention": intervention,
+                    "attachments": message.attachments,
+                },
+                agent_name=self.agent_name,
+                context_id=self.context.id
+            )
+        except Exception as e:
+            # Don't let memory monitoring failures break the main flow
+            PrintStyle(font_color="yellow", padding=True).print(
+                f"Memory monitor broadcast failed: {e}"
+            )
+        
         return msg
 
     def hist_add_ai_response(self, message: str):
+        """
+        Add an AI response to the history.
+        
+        This method:
+        1. Updates the last response in loop data
+        2. Formats the message using the AI response template
+        3. Adds the message to the history
+        4. Broadcasts the event to the memory monitor for automatic memory management
+        
+        Args:
+            message: The AI response message
+            
+        Returns:
+            The created Message object
+        """
         self.loop_data.last_response = message
         content = self.parse_prompt("fw.ai_response.md", message=message)
+        
+        # Broadcast to memory monitor for automatic memory management
+        try:
+            memory_monitor.broadcast_conversation_event(
+                speaker="agent",
+                message=message,
+                context={
+                    "agent_number": self.number,
+                    "loop_iteration": self.loop_data.iteration,
+                },
+                agent_name=self.agent_name,
+                context_id=self.context.id
+            )
+        except Exception as e:
+            # Don't let memory monitoring failures break the main flow
+            PrintStyle(font_color="yellow", padding=True).print(
+                f"Memory monitor broadcast failed: {e}"
+            )
+        
         return self.hist_add_message(True, content=content)
 
     def hist_add_warning(self, message: history.MessageContent):

@@ -1,0 +1,178 @@
+{
+  "mcpServers": {
+    "memory-manager": {
+      "name": "Memory Manager",
+      "description": "Agent Zero Memory Management Server - Manages memories, knowledge base, and agent rules",
+      "type": "stdio",
+      "command": "python",
+      "args": ["/a0/run_memory_mcp.py"],
+      "env": {
+        "MEMORY_MCP_HOST": "localhost",
+        "MEMORY_MCP_PORT": "3001"
+      },
+      "enabled": true
+    },
+    "filesystem": {
+      "name": "Filesystem",
+      "description": "Access and manage files and directories with advanced search capabilities",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp", "/home"],
+      "enabled": false,
+      "notes": "Provides read/write access to specified directories. Configure allowed paths in args."
+    },
+    "git": {
+      "name": "Git",
+      "description": "Git operations including status, diff, commit, and repository management",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git"],
+      "enabled": false,
+      "notes": "Provides Git integration. Must be run in a Git repository."
+    },
+    "github": {
+      "name": "GitHub",
+      "description": "GitHub API integration for issues, PRs, repositories, and code search",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "enabled": false,
+      "notes": "Requires GITHUB_TOKEN environment variable for authentication."
+    },
+    "gitlab": {
+      "name": "GitLab",
+      "description": "GitLab API integration for issues, merge requests, and repository management",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "env": {
+        "GITLAB_TOKEN": "${GITLAB_TOKEN}",
+        "GITLAB_URL": "${GITLAB_URL}"
+      },
+      "enabled": false,
+      "notes": "Requires GITLAB_TOKEN and optionally GITLAB_URL (defaults to gitlab.com)."
+    },
+    "postgres": {
+      "name": "PostgreSQL",
+      "description": "PostgreSQL database queries and schema inspection",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${POSTGRES_CONNECTION_STRING}"
+      },
+      "enabled": false,
+      "notes": "Requires POSTGRES_CONNECTION_STRING environment variable."
+    },
+    "sqlite": {
+      "name": "SQLite",
+      "description": "SQLite database queries and management",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/path/to/database.db"],
+      "enabled": false,
+      "notes": "Configure database path in args."
+    },
+    "brave-search": {
+      "name": "Brave Search",
+      "description": "Web search using Brave Search API",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      },
+      "enabled": false,
+      "notes": "Requires BRAVE_API_KEY environment variable."
+    },
+    "google-drive": {
+      "name": "Google Drive",
+      "description": "Access and manage Google Drive files and folders",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gdrive"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}"
+      },
+      "enabled": false,
+      "notes": "Requires Google Cloud service account credentials."
+    },
+    "slack": {
+      "name": "Slack",
+      "description": "Send messages and interact with Slack workspaces",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+      },
+      "enabled": false,
+      "notes": "Requires SLACK_BOT_TOKEN environment variable."
+    },
+    "puppeteer": {
+      "name": "Puppeteer",
+      "description": "Browser automation and web scraping with Puppeteer",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "enabled": false,
+      "notes": "Provides headless browser automation capabilities."
+    },
+    "docker": {
+      "name": "Docker",
+      "description": "Docker container management and operations",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "docker-mcp"],
+      "enabled": false,
+      "notes": "Manage Docker containers, images, networks, and volumes."
+    },
+    "kubernetes": {
+      "name": "Kubernetes",
+      "description": "Kubernetes cluster management and operations",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+      "env": {
+        "KUBECONFIG": "${KUBECONFIG}"
+      },
+      "enabled": false,
+      "notes": "Requires kubectl and KUBECONFIG environment variable."
+    },
+    "sequential-thinking": {
+      "name": "Sequential Thinking",
+      "description": "Enhanced reasoning through structured thought processes",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": false,
+      "notes": "Provides prompts for step-by-step reasoning."
+    },
+    "everything": {
+      "name": "Everything Search",
+      "description": "Fast file search using Everything search engine (Windows only)",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "enabled": false,
+      "notes": "Windows only. Requires Everything search engine installed."
+    },
+    "aws-kb": {
+      "name": "AWS Knowledge Base",
+      "description": "Query AWS knowledge bases and documents",
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws-kb-retrieval"],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+        "AWS_REGION": "${AWS_REGION}"
+      },
+      "enabled": false,
+      "notes": "Requires AWS credentials and region."
+    }
+  }
+}
