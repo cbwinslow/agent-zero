@@ -27,6 +27,7 @@ from typing import Callable
 from python.helpers.localization import Localization
 from python.helpers.extension import call_extensions
 from python.helpers.errors import RepairableException
+from python.helpers import error_tracker
 
 
 class AgentContextType(Enum):
@@ -485,6 +486,18 @@ class Agent:
         return full_prompt
 
     def handle_critical_exception(self, exception: Exception):
+        """
+        Handle critical exceptions in the agent's execution.
+        
+        This method:
+        1. Logs the error to the error tracking system
+        2. Attempts to find similar errors and their solutions
+        3. Displays error information to the user
+        4. Re-raises the exception to terminate the loop
+        
+        Args:
+            exception: The exception that occurred
+        """
         if isinstance(exception, HandledException):
             raise exception  # Re-raise the exception to kill the loop
         elif isinstance(exception, asyncio.CancelledError):
@@ -500,13 +513,40 @@ class Agent:
             error_text = errors.error_text(exception)
             error_message = errors.format_error(exception)
 
+            # Log error to tracking system with context
+            error_context = {
+                "agent_name": self.agent_name,
+                "agent_number": self.number,
+                "context_id": self.context.id,
+                "loop_iteration": getattr(self, 'loop_data', None) and self.loop_data.iteration or -1,
+            }
+            error_id = error_tracker.log_error(exception, context=error_context)
+            
+            # Try to find similar errors and their solutions
+            similar_errors = error_tracker.find_similar_errors(exception, limit=3)
+            if similar_errors:
+                PrintStyle(font_color="yellow", padding=True).print(
+                    f"Found {len(similar_errors)} similar error(s) in history (Error ID: {error_id})"
+                )
+                
+                # Check if any similar errors have solutions
+                solutions = error_tracker.get_solutions(exception)
+                if solutions:
+                    PrintStyle(font_color="cyan", padding=True).print(
+                        f"Possible solution from previous occurrence:"
+                    )
+                    for idx, sol in enumerate(solutions[:2], 1):  # Show top 2 solutions
+                        PrintStyle(font_color="cyan", padding=False).print(
+                            f"  {idx}. {sol.get('solution', 'No solution description')}"
+                        )
+
             # Mask secrets in error messages
             PrintStyle(font_color="red", padding=True).print(error_message)
             self.context.log.log(
                 type="error",
                 heading="Error",
                 content=error_message,
-                kvps={"text": error_text},
+                kvps={"text": error_text, "error_id": error_id},
             )
             PrintStyle(font_color="red", padding=True).print(
                 f"{self.agent_name}: {error_text}"
