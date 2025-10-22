@@ -64,9 +64,11 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - Agent Zero uses the operating system as a tool to accomplish its tasks. It has no single-purpose tools pre-programmed. Instead, it can write its own code and use the terminal to create and use its own tools as needed.
 - The only default tools in its arsenal are online search, memory features, communication (with the user and other agents), and code/terminal execution. Everything else is created by the agent itself or can be extended by the user.
 - Tool usage functionality has been developed from scratch to be the most compatible and reliable, even with very small models.
-- **Default Tools:** Agent Zero includes tools like knowledge, code execution, and communication.
+- **Default Tools:** Agent Zero includes tools like knowledge, code execution, communication, GitHub integration, and OSINT toolkit.
 - **Creating Custom Tools:** Extend Agent Zero's functionality by creating your own custom tools.
 - **Instruments:** Instruments are a new type of tool that allow you to create custom functions and procedures that can be called by Agent Zero.
+- **MCP Servers:** Over 40 Model Context Protocol servers including OSINT, security, cloud, and development tools.
+- **OSINT & Security Tools:** Comprehensive Open Source Intelligence and security testing capabilities built-in.
 
 3. **Advanced Multi-agent System with Memory Management**
 
@@ -76,12 +78,26 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - **Adaptive Coordination**: Intelligent task distribution across agents using sequential, parallel, or adaptive strategies
 - **OpenRouter Integration**: Pre-configured support for OpenRouter SDK providing access to multiple LLM providers
 - **Agent Hierarchy**: Every agent has a superior giving tasks and instructions, with subordinates helping break down complex problems
+- **GitHub Integration**: Comprehensive GitHub API integration with backup/restore capabilities for knowledge base and memory
 - See [Multi-Agent Memory System Guide](./QUICK_START_MULTI_AGENT.md) for quick setup
 
 ![Multi-agent](docs/res/physics.png)
 ![Multi-agent 2](docs/res/physics-2.png)
 
-4. **Completely Customizable and Extensible**
+4. **OSINT & Security Testing Capabilities**
+
+- **40+ MCP Servers**: Comprehensive Model Context Protocol server support including OSINT, security, cloud, and development tools
+- **VS Code Compatible**: MCP configuration transferable between VS Code and Agent Zero
+- **Network Reconnaissance**: Nmap, Masscan, Subfinder, Amass for network scanning and subdomain enumeration
+- **Web Intelligence**: theHarvester, Sherlock, HTTPx, GoBuster, WPScan for email harvesting and web reconnaissance
+- **Threat Intelligence**: Shodan, Censys, VirusTotal, SecurityTrails integration for security research
+- **Vulnerability Assessment**: Nuclei, Nikto, SQLMap for vulnerability scanning and testing
+- **Social Media OSINT**: Username enumeration, social media profiling across 300+ platforms
+- **Certificate Intelligence**: Certificate transparency log search for subdomain discovery
+- **Built on Kali Linux**: Full access to penetration testing and security tools
+- See [OSINT & Security Guide](./docs/osint_and_security.md) for comprehensive documentation
+
+5. **Completely Customizable and Extensible**
 
 - Almost nothing in this framework is hard-coded. Nothing is hidden. Everything can be extended or changed by the user.
 - The whole behavior is defined by a system prompt in the **prompts/default/agent.system.md** file. Change this prompt and change the framework dramatically.
@@ -91,7 +107,7 @@ From now on, please use this name for both `git clone` and `docker pull` command
 
 ![Prompts](/docs/res/prompts.png)
 
-5. **Communication is Key**
+6. **Communication is Key**
 
 - Give your agent a proper system prompt and instructions, and it can do miracles.
 - Agents can communicate with their superiors and subordinates, asking questions, giving instructions, and providing guidance. Instruct your agents in the system prompt on how to communicate effectively.
@@ -109,6 +125,14 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - **System Admin** - `"Set up a monitoring system for our web servers"`
 
 - **Research** - `"Gather and summarize five recent AI papers about CoT prompting"`
+
+- **OSINT & Reconnaissance** - `"Perform comprehensive reconnaissance on target.com including subdomain enumeration, certificate transparency search, and DNS records"`
+
+- **Security Testing** - `"Scan target system for vulnerabilities and generate a security report"`
+
+- **GitHub Management** - `"Backup my knowledge base to GitHub and create issues for discovered bugs"`
+
+- **Social Media Intelligence** - `"Search for company mentions across Twitter, LinkedIn, and Reddit"`
 
 
 
@@ -167,11 +191,25 @@ docker run -p 50001:80 agent0ai/agent-zero
 | [Extensibility](./docs/extensibility.md) | Extending Agent Zero |
 | [Connectivity](./docs/connectivity.md) | External API endpoints, MCP server connections, A2A protocol |
 | [Architecture](./docs/architecture.md) | System design and components |
+| [OSINT & Security](./docs/osint_and_security.md) | OSINT tools, security testing, reconnaissance |
+| [MCP Setup](./docs/mcp_setup.md) | MCP server configuration and management |
 | [Contributing](./docs/contribution.md) | How to contribute |
 | [Troubleshooting](./docs/troubleshooting.md) | Common issues and their solutions |
 
 
 ## 🎯 Changelog
+
+### v0.9.7 - OSINT & MCP Server Integration
+- **40+ MCP Servers**: Comprehensive MCP server support including OSINT, security, cloud, and development tools
+- **VS Code Compatible Config**: MCP configuration transferable between VS Code and Agent Zero
+- **OSINT Tools**: theHarvester, Subfinder, Amass, Sherlock, Recon-ng, SpiderFoot installed by default
+- **Network Scanning**: Nmap, Masscan, Nuclei, HTTPx for network reconnaissance
+- **Security Testing**: Nikto, WPScan, GoBuster, SQLMap for vulnerability assessment
+- **Threat Intelligence**: Shodan, Censys, VirusTotal, SecurityTrails MCP integration
+- **GitHub Integration**: Comprehensive GitHub API helper with backup/restore for knowledge base
+- **OSINT Toolkit**: Unified tool for subdomain enumeration, email harvesting, social media search
+- **Certificate Intelligence**: Certificate transparency log search for subdomain discovery
+- **Comprehensive Documentation**: OSINT guide, security best practices, API configuration
 
 ### v0.9.6 - Memory Dashboard
 [Release video](https://youtu.be/sizjAq2-d9s)
