@@ -1,0 +1,269 @@
+{
+  "mcpServers": {
+    "memory-manager": {
+      "command": "python",
+      "args": ["/a0/run_memory_mcp.py"],
+      "env": {
+        "MEMORY_MCP_HOST": "localhost",
+        "MEMORY_MCP_PORT": "3001"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp", "/home"]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "gitlab": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "env": {
+        "GITLAB_TOKEN": "${GITLAB_TOKEN}",
+        "GITLAB_URL": "${GITLAB_URL}"
+      }
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${POSTGRES_CONNECTION_STRING}"
+      }
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/path/to/database.db"]
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "slack": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "env": {
+        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
+      }
+    },
+    "google-drive": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gdrive"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}"
+      }
+    },
+    "docker": {
+      "command": "npx",
+      "args": ["-y", "docker-mcp"]
+    },
+    "kubernetes": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+      "env": {
+        "KUBECONFIG": "${KUBECONFIG}"
+      }
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "aws-kb": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-aws-kb-retrieval"],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
+        "AWS_REGION": "${AWS_REGION}"
+      }
+    },
+    "time": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-time"]
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"]
+    },
+    "youtube-transcript": {
+      "command": "npx",
+      "args": ["-y", "@kimtaeyoon83/mcp-server-youtube-transcript"]
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": ["-y", "obsidian-mcp"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "${OBSIDIAN_VAULT_PATH}"
+      }
+    },
+    "redis": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-redis"],
+      "env": {
+        "REDIS_URL": "${REDIS_URL}"
+      }
+    },
+    "mcp-memory": {
+      "command": "npx",
+      "args": ["-y", "mcp-memory"]
+    },
+    "arxiv": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-arxiv"]
+    },
+    "shell": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-shell"]
+    },
+    "sentry": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sentry"],
+      "env": {
+        "SENTRY_DSN": "${SENTRY_DSN}"
+      }
+    },
+    "azure-devops": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-azure-devops"],
+      "env": {
+        "AZURE_DEVOPS_TOKEN": "${AZURE_DEVOPS_TOKEN}",
+        "AZURE_DEVOPS_ORG": "${AZURE_DEVOPS_ORG}"
+      }
+    },
+    "linear": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-linear"],
+      "env": {
+        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
+      }
+    },
+    "jira": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-jira"],
+      "env": {
+        "JIRA_URL": "${JIRA_URL}",
+        "JIRA_EMAIL": "${JIRA_EMAIL}",
+        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
+      }
+    },
+    "asana": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-asana"],
+      "env": {
+        "ASANA_ACCESS_TOKEN": "${ASANA_ACCESS_TOKEN}"
+      }
+    },
+    "notion": {
+      "command": "npx",
+      "args": ["-y", "@notionhq/mcp-server-notion"],
+      "env": {
+        "NOTION_TOKEN": "${NOTION_TOKEN}"
+      }
+    },
+    "airtable": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-airtable"],
+      "env": {
+        "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY}"
+      }
+    },
+    "mongodb": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-mongodb"],
+      "env": {
+        "MONGODB_URI": "${MONGODB_URI}"
+      }
+    },
+    "mysql": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-mysql"],
+      "env": {
+        "MYSQL_CONNECTION_STRING": "${MYSQL_CONNECTION_STRING}"
+      }
+    },
+    "web-search": {
+      "command": "npx",
+      "args": ["-y", "mcp-web-search"]
+    },
+    "whois": {
+      "command": "npx",
+      "args": ["-y", "mcp-whois"]
+    },
+    "shodan": {
+      "command": "npx",
+      "args": ["-y", "mcp-shodan"],
+      "env": {
+        "SHODAN_API_KEY": "${SHODAN_API_KEY}"
+      }
+    },
+    "censys": {
+      "command": "npx",
+      "args": ["-y", "mcp-censys"],
+      "env": {
+        "CENSYS_API_ID": "${CENSYS_API_ID}",
+        "CENSYS_API_SECRET": "${CENSYS_API_SECRET}"
+      }
+    },
+    "nmap": {
+      "command": "python",
+      "args": ["/a0/python/mcp_servers/nmap_server.py"]
+    },
+    "osint-toolkit": {
+      "command": "python",
+      "args": ["/a0/python/mcp_servers/osint_server.py"]
+    },
+    "virustotal": {
+      "command": "npx",
+      "args": ["-y", "mcp-virustotal"],
+      "env": {
+        "VIRUSTOTAL_API_KEY": "${VIRUSTOTAL_API_KEY}"
+      }
+    },
+    "haveibeenpwned": {
+      "command": "npx",
+      "args": ["-y", "mcp-hibp"],
+      "env": {
+        "HIBP_API_KEY": "${HIBP_API_KEY}"
+      }
+    },
+    "securitytrails": {
+      "command": "npx",
+      "args": ["-y", "mcp-securitytrails"],
+      "env": {
+        "SECURITYTRAILS_API_KEY": "${SECURITYTRAILS_API_KEY}"
+      }
+    },
+    "crt-sh": {
+      "command": "python",
+      "args": ["/a0/python/mcp_servers/crtsh_server.py"]
+    },
+    "ipinfo": {
+      "command": "npx",
+      "args": ["-y", "mcp-ipinfo"],
+      "env": {
+        "IPINFO_TOKEN": "${IPINFO_TOKEN}"
+      }
+    },
+    "hunter": {
+      "command": "npx",
+      "args": ["-y", "mcp-hunter"],
+      "env": {
+        "HUNTER_API_KEY": "${HUNTER_API_KEY}"
+      }
+    }
+  }
+}
