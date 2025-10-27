@@ -400,22 +400,25 @@ class AdvancedFeatures(Tool):
                 break_loop=False
             )
         
-        valid_features = [
-            "hierarchical_memory",
-            "advanced_reasoning",
-            "tool_optimizer",
-            "advanced_rag",
-            "tool_cache",
-            "chain_of_thought",
-        ]
+        # Map of feature names to config keys
+        valid_features = {
+            "hierarchical_memory": "enable_hierarchical_memory",
+            "advanced_reasoning": "enable_advanced_reasoning",
+            "tool_optimizer": "enable_tool_optimizer",
+            "advanced_rag": "enable_advanced_rag",
+            "tool_cache": "enable_tool_cache",
+            "chain_of_thought": "use_chain_of_thought",  # Different naming pattern
+        }
         
         if feature not in valid_features:
             return Response(
-                message=f"Invalid feature: {feature}. Valid: {', '.join(valid_features)}",
+                message=f"Invalid feature: {feature}. Valid: {', '.join(valid_features.keys())}",
                 break_loop=False
             )
         
-        self.agent.config.additional[f"enable_{feature}"] = True
+        # Use the correct config key
+        config_key = valid_features[feature]
+        self.agent.config.additional[config_key] = True
         
         return Response(
             message=f"Enabled {feature}. Restart may be required for full effect.",
@@ -430,7 +433,25 @@ class AdvancedFeatures(Tool):
                 break_loop=False
             )
         
-        self.agent.config.additional[f"enable_{feature}"] = False
+        # Map of feature names to config keys (same as enable)
+        valid_features = {
+            "hierarchical_memory": "enable_hierarchical_memory",
+            "advanced_reasoning": "enable_advanced_reasoning",
+            "tool_optimizer": "enable_tool_optimizer",
+            "advanced_rag": "enable_advanced_rag",
+            "tool_cache": "enable_tool_cache",
+            "chain_of_thought": "use_chain_of_thought",
+        }
+        
+        if feature not in valid_features:
+            return Response(
+                message=f"Invalid feature: {feature}. Valid: {', '.join(valid_features.keys())}",
+                break_loop=False
+            )
+        
+        # Use the correct config key
+        config_key = valid_features[feature]
+        self.agent.config.additional[config_key] = False
         
         return Response(
             message=f"Disabled {feature}",
