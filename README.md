@@ -81,7 +81,17 @@ From now on, please use this name for both `git clone` and `docker pull` command
 ![Multi-agent](docs/res/physics.png)
 ![Multi-agent 2](docs/res/physics-2.png)
 
-4. **Completely Customizable and Extensible**
+4. **Security & OSINT Capabilities** 🔐
+
+- **Network Reconnaissance**: Perform port scanning, host discovery, service detection, and OS fingerprinting using nmap integration
+- **OSINT Tools**: Gather intelligence from public sources including Shodan, Censys, DNS enumeration, and WHOIS lookups
+- **Server Orchestration**: Execute commands across multiple servers simultaneously via SSH with parallel execution and file transfer
+- **Web Security Testing**: Directory enumeration, SQL injection detection, XSS testing, HTTP header analysis, and SSL/TLS assessment
+- **Distributed Operations**: String together multiple servers for coordinated tasks and operations
+- **Ethical Guidelines**: All tools include legal warnings and are designed for authorized testing only
+- See [Hacking Tools Documentation](./docs/HACKING_TOOLS.md) for detailed usage and setup
+
+5. **Completely Customizable and Extensible**
 
 - Almost nothing in this framework is hard-coded. Nothing is hidden. Everything can be extended or changed by the user.
 - The whole behavior is defined by a system prompt in the **prompts/default/agent.system.md** file. Change this prompt and change the framework dramatically.
@@ -91,7 +101,7 @@ From now on, please use this name for both `git clone` and `docker pull` command
 
 ![Prompts](/docs/res/prompts.png)
 
-5. **Communication is Key**
+6. **Communication is Key**
 
 - Give your agent a proper system prompt and instructions, and it can do miracles.
 - Agents can communicate with their superiors and subordinates, asking questions, giving instructions, and providing guidance. Instruct your agents in the system prompt on how to communicate effectively.
@@ -109,6 +119,12 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - **System Admin** - `"Set up a monitoring system for our web servers"`
 
 - **Research** - `"Gather and summarize five recent AI papers about CoT prompting"`
+
+- **Security Testing** - `"Perform network reconnaissance on my test lab at 192.168.1.0/24"`
+
+- **OSINT Gathering** - `"Find all subdomains and DNS records for my domain example.com"`
+
+- **Server Orchestration** - `"Check disk space and uptime across all 10 production servers simultaneously"`
 
 
 

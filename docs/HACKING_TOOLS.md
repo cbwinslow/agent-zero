@@ -141,6 +141,41 @@ Web application security testing and vulnerability assessment.
 }
 ```
 
+### 5. crypto_tool
+
+Cryptography and hash analysis tool.
+
+**Operations:**
+- `hash_identify`: Identify hash type based on length and format
+- `encode`: Encode text (base64, hex, URL encoding)
+- `decode`: Decode encoded text
+- `generate_hash`: Generate hashes (MD5, SHA-1, SHA-256, SHA-512)
+- `password_strength`: Analyze password strength and provide recommendations
+- `hash_crack`: Attempt to crack hash using common wordlist (demo only)
+
+**Example:**
+```python
+{
+    "tool_name": "crypto_tool",
+    "tool_args": {
+        "operation": "hash_identify",
+        "hash": "5d41402abc4b2a76b9719d911017c592"
+    }
+}
+```
+- `web_crawl`: Web application crawling
+
+**Example:**
+```python
+{
+    "tool_name": "web_exploit",
+    "tool_args": {
+        "operation": "header_analysis",
+        "target": "https://example.com"
+    }
+}
+```
+
 ## Python Libraries
 
 The following Python libraries have been added to `requirements.txt`:

@@ -63,6 +63,10 @@ def validate_setup():
         "python/tools/web_exploit.py",
         "Web Exploitation Tool"
     ))
+    checks.append(check_file_exists(
+        "python/tools/crypto_tool.py",
+        "Cryptography Tool"
+    ))
     
     # Check prompt documentation
     print("\n2. Checking prompt documentation...")
@@ -81,6 +85,10 @@ def validate_setup():
     checks.append(check_file_exists(
         "prompts/agent.system.tool.web_exploit.md",
         "Web Exploit Prompt"
+    ))
+    checks.append(check_file_exists(
+        "prompts/agent.system.tool.crypto.md",
+        "Crypto Tool Prompt"
     ))
     
     # Check documentation
@@ -118,6 +126,11 @@ def validate_setup():
         "python/tools/web_exploit.py",
         "class WebExploit(Tool):",
         "WebExploit class definition"
+    ))
+    checks.append(check_file_content(
+        "python/tools/crypto_tool.py",
+        "class CryptoTool(Tool):",
+        "CryptoTool class definition"
     ))
     
     # Check requirements.txt
