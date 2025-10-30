@@ -4,7 +4,9 @@ This guide helps you quickly get started with the new MCP Server Discovery featu
 
 ## What is MCP Server Discovery?
 
-MCP Server Discovery allows Agent Zero to automatically find and configure Model Context Protocol (MCP) servers from multiple sources:
+MCP stands for Model Context Protocol - a standard protocol for connecting AI systems to external tools and services.
+
+MCP Server Discovery allows Agent Zero to automatically find and configure MCP servers from multiple sources:
 
 - **npm Registry**: Official and community MCP servers (100+ servers)
 - **GitHub**: Open-source MCP server repositories
@@ -118,7 +120,7 @@ All discovered servers generate configurations in this format:
 
 ## Environment Variables
 
-Many servers require API keys or tokens. Add these to your `.env` file:
+Many servers require API keys or tokens. Add these to your `.env` file in the root of your Agent Zero installation directory:
 
 ```bash
 # GitHub Integration
