@@ -67,6 +67,7 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - **Default Tools:** Agent Zero includes tools like knowledge, code execution, and communication.
 - **Creating Custom Tools:** Extend Agent Zero's functionality by creating your own custom tools.
 - **Instruments:** Instruments are a new type of tool that allow you to create custom functions and procedures that can be called by Agent Zero.
+- **MCP Server Discovery:** Discover and install 250+ MCP servers from npm, GitHub, and Docker Hub with an integrated discovery interface. Browse servers, view details, and add them with one click.
 
 3. **Advanced Multi-agent System with Memory Management**
 
@@ -188,6 +189,14 @@ docker run -p 50001:80 agent0ai/agent-zero
 
 
 ## 🎯 Changelog
+
+### v0.9.7 - MCP Server Discovery (Upcoming)
+- **MCP Server Discovery Interface**: Browse and install 250+ MCP servers from npm, GitHub, and Docker Hub
+- **Integrated Discovery UI**: Search, filter, and view detailed information about available MCP servers
+- **One-Click Configuration**: Generate and copy server configurations directly from the discovery interface
+- **Multi-Source Discovery**: Automatic discovery from npm registry, GitHub repositories, and Docker Hub
+- **Smart Caching**: 24-hour cache for improved performance with manual refresh option
+- **Enhanced MCP Ecosystem**: Added 6 new community MCP servers to default configuration
 
 ### v0.9.6 - Memory Dashboard
 [Release video](https://youtu.be/sizjAq2-d9s)

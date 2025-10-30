@@ -1,0 +1,128 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check Markdown links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        config-file: '.github/markdown-link-check-config.json'
+        
+    - name: Lint Markdown files
+      uses: DavidAnson/markdownlint-cli2-action@v14
+      with:
+        globs: |
+          **/*.md
+          !node_modules
+          
+  build-docs:
+    name: Build Documentation Site
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install MkDocs
+      run: |
+        pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+        
+    - name: Create MkDocs config
+      run: |
+        cat > mkdocs.yml << 'EOF'
+        site_name: Agent Zero Documentation
+        site_description: Personal AI agent framework
+        site_author: Agent Zero Team
+        repo_url: https://github.com/agent0ai/agent-zero
+        
+        theme:
+          name: material
+          palette:
+            primary: indigo
+            accent: indigo
+          features:
+            - navigation.tabs
+            - navigation.sections
+            - toc.integrate
+            - search.suggest
+            - search.highlight
+            - content.tabs.link
+            
+        nav:
+          - Home: README.md
+          - Getting Started:
+            - Installation: docs/installation.md
+            - Usage: docs/usage.md
+            - Quick Start: QUICK_START_MULTI_AGENT.md
+          - Features:
+            - Architecture: docs/architecture.md
+            - Extensibility: docs/extensibility.md
+            - Connectivity: docs/connectivity.md
+          - MCP Integration:
+            - MCP Discovery: docs/mcp_discovery.md
+            - MCP Quickstart: docs/mcp_discovery_quickstart.md
+            - MCP Setup: docs/mcp_setup.md
+            - MCP Servers Guide: docs/mcp_servers_guide.md
+          - Development:
+            - Development Guide: docs/development.md
+            - Contributing: docs/contribution.md
+            - Troubleshooting: docs/troubleshooting.md
+            
+        markdown_extensions:
+          - admonition
+          - codehilite
+          - pymdownx.superfences
+          - pymdownx.tabbed
+          - toc:
+              permalink: true
+        EOF
+        
+    - name: Build documentation
+      run: mkdocs build
+      
+    - name: Upload docs artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: site/
+        retention-days: 7
+        
+  spell-check:
+    name: Spell Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check spelling
+      uses: rojopolis/spellcheck-github-actions@v0
+      with:
+        config_path: .github/spellcheck-config.yml
+        task_name: Markdown

@@ -1,0 +1,145 @@
+name: PR Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created]
+
+jobs:
+  auto-label:
+    name: Auto Label PRs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Label based on file changes
+      uses: actions/labeler@v5
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        configuration-path: .github/labeler.yml
+        
+    - name: Size label
+      uses: codelytv/pr-size-labeler@v1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        xs_label: 'size/XS'
+        xs_max_size: 10
+        s_label: 'size/S'
+        s_max_size: 100
+        m_label: 'size/M'
+        m_max_size: 500
+        l_label: 'size/L'
+        l_max_size: 1000
+        xl_label: 'size/XL'
+        
+  pr-title-check:
+    name: Check PR Title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Check PR title
+      uses: amannn/action-semantic-pull-request@v5
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        types: |
+          feat
+          fix
+          docs
+          style
+          refactor
+          perf
+          test
+          build
+          ci
+          chore
+          revert
+        requireScope: false
+        
+  auto-assign:
+    name: Auto Assign Reviewers
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    permissions:
+      pull-requests: write
+      
+    steps:
+    - name: Auto assign
+      uses: kentaro-m/auto-assign-action@v1.2.5
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        
+  stale-pr:
+    name: Mark Stale PRs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      
+    steps:
+    - name: Mark stale PRs
+      uses: actions/stale@v9
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        stale-pr-message: 'This PR has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions.'
+        close-pr-message: 'This PR was automatically closed due to inactivity.'
+        days-before-stale: 30
+        days-before-close: 7
+        stale-pr-label: 'stale'
+        exempt-pr-labels: 'in-progress,blocked'
+        
+  conflict-check:
+    name: Check for Merge Conflicts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Check for conflicts
+      uses: eps1lon/actions-label-merge-conflict@releases/2.x
+      with:
+        dirtyLabel: "needs-rebase"
+        repoToken: "${{ secrets.GITHUB_TOKEN }}"
+        
+  pr-comment-bot:
+    name: PR Comment Bot
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for commands
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const comment = context.payload.comment.body;
+          
+          // Check for /rerun command
+          if (comment.includes('/rerun')) {
+            github.rest.actions.reRunWorkflow({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id
+            });
+          }
+          
+          // Check for /format command
+          if (comment.includes('/format')) {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🤖 Running code formatter...'
+            });
+          }
