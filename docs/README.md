@@ -7,6 +7,7 @@ To begin with Agent Zero, follow the links below for detailed guides on various 
 - **[Development](development.md):** Set up a development environment for Agent Zero.
 - **[Extensibility](extensibility.md):** Learn how to create custom extensions for Agent Zero.
 - **[Connectivity](connectivity.md):** Learn how to connect to Agent Zero from other applications.
+- **[CI/CD & Automation Guide](ci_cd_guide.md):** Comprehensive guide to GitHub Actions workflows, testing, and automation.
 - **[MCP Server Discovery](mcp_discovery.md):** Discover and install MCP servers from npm, GitHub, and Docker Hub.
 - **[MCP Setup Guide](mcp_setup.md):** Configure MCP servers for Agent Zero.
 - **[MCP Servers Guide](mcp_servers_guide.md):** Detailed guide on available MCP servers and configuration.

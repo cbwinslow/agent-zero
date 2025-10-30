@@ -1,0 +1,135 @@
+name: Performance & Benchmarks
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-benchmark memory-profiler
+        
+    - name: Run performance benchmarks
+      run: |
+        python -m pytest tests/ --benchmark-only --benchmark-json=benchmark.json || true
+        
+    - name: Memory profiling
+      run: |
+        python -m memory_profiler tests/test_mcp_discovery.py > memory-profile.txt || true
+        
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-results
+        path: |
+          benchmark.json
+          memory-profile.txt
+        retention-days: 30
+        
+  code-metrics:
+    name: Code Metrics
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install analysis tools
+      run: |
+        pip install radon lizard
+        
+    - name: Calculate complexity
+      run: |
+        echo "## Cyclomatic Complexity" > metrics.md
+        radon cc python/ -a -s >> metrics.md
+        echo "" >> metrics.md
+        echo "## Maintainability Index" >> metrics.md
+        radon mi python/ -s >> metrics.md
+        echo "" >> metrics.md
+        echo "## Code Analysis" >> metrics.md
+        lizard python/ >> metrics.md || true
+        
+    - name: Upload metrics
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-metrics
+        path: metrics.md
+        retention-days: 30
+        
+    - name: Comment PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const metrics = fs.readFileSync('metrics.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## Code Metrics\n\n${metrics}`
+          });
+          
+  load-test:
+    name: Load Testing
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install locust
+        
+    - name: Run load tests
+      run: |
+        # Create a simple load test script
+        cat > locustfile.py << 'EOF'
+        from locust import HttpUser, task, between
+        
+        class AgentZeroUser(HttpUser):
+            wait_time = between(1, 5)
+            
+            @task
+            def mcp_discover(self):
+                self.client.get("/api/mcp_discover")
+        EOF
+        
+        # Start load test (headless mode)
+        locust -f locustfile.py --headless --users 10 --spawn-rate 2 --run-time 60s --host http://localhost:50001 || true

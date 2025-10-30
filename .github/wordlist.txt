@@ -1,0 +1,82 @@
+# Custom wordlist for spell checking
+# Add project-specific terms, acronyms, and proper nouns
+
+# Project names
+AgentZero
+MCP
+OpenRouter
+SearXNG
+FastA2A
+Kali
+LiteLLM
+KaTeX
+Skool
+
+# Technical terms
+API
+APIs
+JSON
+YAML
+CLI
+UI
+UX
+CI
+CD
+npm
+npx
+PyPI
+OAuth
+SSE
+stdio
+CRUD
+REST
+WebSocket
+async
+asyncio
+
+# Package names
+Flask
+Docker
+Kubernetes
+PostgreSQL
+SQLite
+MySQL
+GitHub
+GitLab
+Bitbucket
+Slack
+Puppeteer
+Brave
+AWS
+
+# File formats
+Dockerfile
+Dockerfiles
+markdown
+config
+configs
+
+# Agent Zero specific
+subordinates
+prompts
+instruments
+subordinate
+chats
+embeddings
+searxng
+litellm
+openrouter
+fasta2a
+
+# Common programming terms
+runtime
+middleware
+backend
+frontend
+workflow
+workflows
+screenshot
+screenshots
+changelog
+refactor
+refactoring
