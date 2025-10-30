@@ -46,6 +46,18 @@ apt-get install -y --no-install-recommends \
     autopsy \
     sleuthkit
 
+# Install OSINT tools
+echo "Installing OSINT tools..."
+apt-get install -y --no-install-recommends \
+    theharvester \
+    recon-ng \
+    sublist3r \
+    metagoofil \
+    maltego \
+    spiderfoot \
+    chromium \
+    chromium-driver
+
 # Install Metasploit Framework (optional - commented out due to size)
 # echo "Installing Metasploit Framework..."
 # curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall

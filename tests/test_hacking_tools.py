@@ -67,6 +67,10 @@ def validate_setup():
         "python/tools/crypto_tool.py",
         "Cryptography Tool"
     ))
+    checks.append(check_file_exists(
+        "python/tools/osint_advanced.py",
+        "Advanced OSINT Tool"
+    ))
     
     # Check prompt documentation
     print("\n2. Checking prompt documentation...")
@@ -89,6 +93,10 @@ def validate_setup():
     checks.append(check_file_exists(
         "prompts/agent.system.tool.crypto.md",
         "Crypto Tool Prompt"
+    ))
+    checks.append(check_file_exists(
+        "prompts/agent.system.tool.osint_advanced.md",
+        "Advanced OSINT Prompt"
     ))
     
     # Check documentation
@@ -132,6 +140,11 @@ def validate_setup():
         "class CryptoTool(Tool):",
         "CryptoTool class definition"
     ))
+    checks.append(check_file_content(
+        "python/tools/osint_advanced.py",
+        "class OsintAdvanced(Tool):",
+        "OsintAdvanced class definition"
+    ))
     
     # Check requirements.txt
     print("\n6. Checking requirements.txt...")
@@ -154,6 +167,16 @@ def validate_setup():
         "requirements.txt",
         "paramiko==3.5.0",
         "Paramiko in requirements.txt (already present)"
+    ))
+    checks.append(check_file_content(
+        "requirements.txt",
+        "holehe==2.2.1",
+        "Holehe in requirements.txt (new OSINT tool)"
+    ))
+    checks.append(check_file_content(
+        "requirements.txt",
+        "phonenumbers==8.13.50",
+        "Phonenumbers in requirements.txt (new OSINT tool)"
     ))
     
     # Check Docker Dockerfile update

@@ -38,6 +38,14 @@ Agent Zero now includes comprehensive hacking and OSINT (Open Source Intelligenc
 - **dnsutils**: DNS query tools
 - **Shodan API**: Internet-connected device search (requires API key)
 - **Censys API**: Internet asset search (requires API key)
+- **theHarvester**: Email and subdomain harvesting
+- **Recon-ng**: Web reconnaissance framework
+- **Sublist3r**: Subdomain enumeration
+- **Metagoofil**: Metadata extraction
+- **SpiderFoot**: Automated OSINT collection
+- **Holehe**: Email to account finder
+- **H8mail**: Email breach checking
+- **PhoneInfoga**: Phone number intelligence
 
 ### Server Orchestration
 - **paramiko**: SSH library for Python
@@ -163,13 +171,45 @@ Cryptography and hash analysis tool.
     }
 }
 ```
-- `web_crawl`: Web application crawling
+
+### 6. osint_advanced
+
+**NEW** - Advanced OSINT tool with 20+ integrated frameworks for comprehensive intelligence gathering.
+
+**Operations:**
+- `username_search`: Search username across 300+ social networks (Sherlock-style)
+- `email_breach`: Check if email appears in data breaches (H8mail + Holehe)
+- `phone_lookup`: Phone number intelligence (PhoneInfoga-style)
+- `web_crawler`: Advanced web crawling for OSINT (Photon-style)
+- `harvester`: Email and subdomain harvesting (theHarvester-style)
+- `social_analyzer`: Comprehensive social media profile analysis
+- `metadata_extract`: Extract metadata from documents (Metagoofil-style)
+- `google_dork`: Generate advanced Google dork queries
+- `github_recon`: GitHub profile and repository reconnaissance
+- `linkedin_recon`: LinkedIn intelligence gathering guidance
 
 **Example:**
 ```python
 {
-    "tool_name": "web_exploit",
+    "tool_name": "osint_advanced",
     "tool_args": {
+        "operation": "username_search",
+        "target": "johndoe"
+    }
+}
+```
+
+**Example:**
+```python
+{
+    "tool_name": "osint_advanced",
+    "tool_args": {
+        "operation": "web_crawler",
+        "target": "https://example.com",
+        "max_depth": "2"
+    }
+}
+```
         "operation": "header_analysis",
         "target": "https://example.com"
     }
