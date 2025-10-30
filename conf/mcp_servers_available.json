@@ -5,7 +5,9 @@
       "description": "Agent Zero Memory Management Server - Manages memories, knowledge base, and agent rules",
       "type": "stdio",
       "command": "python",
-      "args": ["/a0/run_memory_mcp.py"],
+      "args": [
+        "/a0/run_memory_mcp.py"
+      ],
       "env": {
         "MEMORY_MCP_HOST": "localhost",
         "MEMORY_MCP_PORT": "3001"
@@ -17,7 +19,12 @@
       "description": "Access and manage files and directories with advanced search capabilities",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp", "/home"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/tmp",
+        "/home"
+      ],
       "enabled": false,
       "notes": "Provides read/write access to specified directories. Configure allowed paths in args."
     },
@@ -26,7 +33,10 @@
       "description": "Git operations including status, diff, commit, and repository management",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git"
+      ],
       "enabled": false,
       "notes": "Provides Git integration. Must be run in a Git repository."
     },
@@ -35,7 +45,10 @@
       "description": "GitHub API integration for issues, PRs, repositories, and code search",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
       "env": {
         "GITHUB_TOKEN": "${GITHUB_TOKEN}"
       },
@@ -47,7 +60,10 @@
       "description": "GitLab API integration for issues, merge requests, and repository management",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-gitlab"
+      ],
       "env": {
         "GITLAB_TOKEN": "${GITLAB_TOKEN}",
         "GITLAB_URL": "${GITLAB_URL}"
@@ -60,7 +76,10 @@
       "description": "PostgreSQL database queries and schema inspection",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres"
+      ],
       "env": {
         "POSTGRES_CONNECTION_STRING": "${POSTGRES_CONNECTION_STRING}"
       },
@@ -72,7 +91,11 @@
       "description": "SQLite database queries and management",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sqlite", "/path/to/database.db"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "/path/to/database.db"
+      ],
       "enabled": false,
       "notes": "Configure database path in args."
     },
@@ -81,7 +104,10 @@
       "description": "Web search using Brave Search API",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
       "env": {
         "BRAVE_API_KEY": "${BRAVE_API_KEY}"
       },
@@ -93,7 +119,10 @@
       "description": "Access and manage Google Drive files and folders",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-gdrive"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-gdrive"
+      ],
       "env": {
         "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}"
       },
@@ -105,7 +134,10 @@
       "description": "Send messages and interact with Slack workspaces",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-slack"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-slack"
+      ],
       "env": {
         "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}"
       },
@@ -117,7 +149,10 @@
       "description": "Browser automation and web scraping with Puppeteer",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
       "enabled": false,
       "notes": "Provides headless browser automation capabilities."
     },
@@ -126,7 +161,10 @@
       "description": "Docker container management and operations",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "docker-mcp"],
+      "args": [
+        "-y",
+        "docker-mcp"
+      ],
       "enabled": false,
       "notes": "Manage Docker containers, images, networks, and volumes."
     },
@@ -135,7 +173,10 @@
       "description": "Kubernetes cluster management and operations",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-kubernetes"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-kubernetes"
+      ],
       "env": {
         "KUBECONFIG": "${KUBECONFIG}"
       },
@@ -147,7 +188,10 @@
       "description": "Enhanced reasoning through structured thought processes",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
       "enabled": false,
       "notes": "Provides prompts for step-by-step reasoning."
     },
@@ -156,7 +200,10 @@
       "description": "Fast file search using Everything search engine (Windows only)",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ],
       "enabled": false,
       "notes": "Windows only. Requires Everything search engine installed."
     },
@@ -165,7 +212,10 @@
       "description": "Query AWS knowledge bases and documents",
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-aws-kb-retrieval"],
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-aws-kb-retrieval"
+      ],
       "env": {
         "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
         "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
@@ -173,6 +223,78 @@
       },
       "enabled": false,
       "notes": "Requires AWS credentials and region."
+    },
+    "agentic-flow": {
+      "name": "agentic-flow",
+      "description": "Production-ready AI agent orchestration platform with 66 specialized agents, 213 MCP tools, ReasoningBank learning memory, and autonomous multi-agent swarms. Built by @ruvnet with Claude Agent SDK, neural networks, memory persistence, GitHub integration, ",
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "agentic-flow"
+      ],
+      "enabled": false,
+      "notes": "Source: https://www.npmjs.com/package/agentic-flow"
+    },
+    "git-mcp-server": {
+      "name": "git-mcp-server",
+      "description": "A secure and scalable Git MCP server enabling AI agents to perform comprehensive Git version control operations via STDIO and Streamable HTTP.",
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@cyanheads/git-mcp-server"
+      ],
+      "enabled": false,
+      "notes": "Source: https://www.npmjs.com/package/@cyanheads/git-mcp-server"
+    },
+    "mcp-server-mysql": {
+      "name": "mcp-server-mysql",
+      "description": "MCP server for interacting with MySQL databases based on Node",
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@benborla29/mcp-server-mysql"
+      ],
+      "enabled": false,
+      "notes": "Source: https://www.npmjs.com/package/@benborla29/mcp-server-mysql"
+    },
+    "mcp-server-atlassian-bitbucket": {
+      "name": "mcp-server-atlassian-bitbucket",
+      "description": "Node.js/TypeScript MCP server for Atlassian Bitbucket. Enables AI systems (LLMs) to interact with workspaces, repositories, and pull requests via tools (list, get, comment, search). Connects AI directly to version control workflows through the standard MC",
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@aashari/mcp-server-atlassian-bitbucket"
+      ],
+      "enabled": false,
+      "notes": "Source: https://www.npmjs.com/package/@aashari/mcp-server-atlassian-bitbucket"
+    },
+    "mcp-server": {
+      "name": "mcp-server",
+      "description": "Official Railway MCP server",
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@railway/mcp-server"
+      ],
+      "enabled": false,
+      "notes": "Source: https://www.npmjs.com/package/@railway/mcp-server"
+    },
+    "codacy-mcp": {
+      "name": "codacy-mcp",
+      "description": "Codacy MCP server",
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@codacy/codacy-mcp"
+      ],
+      "enabled": false,
+      "notes": "Source: https://www.npmjs.com/package/@codacy/codacy-mcp"
     }
   }
 }
