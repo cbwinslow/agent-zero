@@ -30,8 +30,7 @@ RUN bash /ins/install_python.sh
 # install searxng
 RUN bash /ins/install_searxng.sh
 
-# install hacking tools
-RUN bash /ins/install_hacking_tools.sh
+
 
 # configure ssh
 RUN bash /ins/configure_ssh.sh
