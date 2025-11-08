@@ -2,6 +2,9 @@
 
 # `Agent Zero`
 
+<p align="center">
+    <a href="https://trendshift.io/repositories/11745" target="_blank"><img src="https://trendshift.io/api/badge/repositories/11745" alt="frdel%2Fagent-zero | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+</p>
 
 [![Agent Zero Website](https://img.shields.io/badge/Website-agent--zero.ai-0A192F?style=for-the-badge&logo=vercel&logoColor=white)](https://agent-zero.ai) [![Thanks to Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Thanks%20to%20Sponsors-FF69B4?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://github.com/sponsors/agent0ai) [![Follow on X](https://img.shields.io/badge/X-Follow-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/Agent0ai) [![Join our Discord](https://img.shields.io/badge/Discord-Join%20our%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/B8KZKNsPpj) [![Subscribe on YouTube](https://img.shields.io/badge/YouTube-Subscribe-red?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/@AgentZeroFW) [![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jan-tomasek/) [![Follow on Warpcast](https://img.shields.io/badge/Warpcast-Follow-5A32F3?style=for-the-badge)](https://warpcast.com/agent-zero) 
 
@@ -67,8 +70,7 @@ From now on, please use this name for both `git clone` and `docker pull` command
 - **Default Tools:** Agent Zero includes tools like knowledge, code execution, communication, GitHub integration, and OSINT toolkit.
 - **Creating Custom Tools:** Extend Agent Zero's functionality by creating your own custom tools.
 - **Instruments:** Instruments are a new type of tool that allow you to create custom functions and procedures that can be called by Agent Zero.
-- **MCP Servers:** Over 40 Model Context Protocol servers including OSINT, security, cloud, and development tools.
-- **OSINT & Security Tools:** Comprehensive Open Source Intelligence and security testing capabilities built-in.
+
 
 3. **Advanced Multi-agent System with Memory Management**
 
@@ -84,18 +86,7 @@ From now on, please use this name for both `git clone` and `docker pull` command
 ![Multi-agent](docs/res/physics.png)
 ![Multi-agent 2](docs/res/physics-2.png)
 
-4. **OSINT & Security Testing Capabilities**
 
-- **40+ MCP Servers**: Comprehensive Model Context Protocol server support including OSINT, security, cloud, and development tools
-- **VS Code Compatible**: MCP configuration transferable between VS Code and Agent Zero
-- **Network Reconnaissance**: Nmap, Masscan, Subfinder, Amass for network scanning and subdomain enumeration
-- **Web Intelligence**: theHarvester, Sherlock, HTTPx, GoBuster, WPScan for email harvesting and web reconnaissance
-- **Threat Intelligence**: Shodan, Censys, VirusTotal, SecurityTrails integration for security research
-- **Vulnerability Assessment**: Nuclei, Nikto, SQLMap for vulnerability scanning and testing
-- **Social Media OSINT**: Username enumeration, social media profiling across 300+ platforms
-- **Certificate Intelligence**: Certificate transparency log search for subdomain discovery
-- **Built on Kali Linux**: Full access to penetration testing and security tools
-- See [OSINT & Security Guide](./docs/osint_and_security.md) for comprehensive documentation
 
 5. **Completely Customizable and Extensible**
 
@@ -126,13 +117,7 @@ From now on, please use this name for both `git clone` and `docker pull` command
 
 - **Research** - `"Gather and summarize five recent AI papers about CoT prompting"`
 
-- **OSINT & Reconnaissance** - `"Perform comprehensive reconnaissance on target.com including subdomain enumeration, certificate transparency search, and DNS records"`
 
-- **Security Testing** - `"Scan target system for vulnerabilities and generate a security report"`
-
-- **GitHub Management** - `"Backup my knowledge base to GitHub and create issues for discovered bugs"`
-
-- **Social Media Intelligence** - `"Search for company mentions across Twitter, LinkedIn, and Reddit"`
 
 
 
@@ -199,17 +184,7 @@ docker run -p 50001:80 agent0ai/agent-zero
 
 ## 🎯 Changelog
 
-### v0.9.7 - OSINT & MCP Server Integration
-- **40+ MCP Servers**: Comprehensive MCP server support including OSINT, security, cloud, and development tools
-- **VS Code Compatible Config**: MCP configuration transferable between VS Code and Agent Zero
-- **OSINT Tools**: theHarvester, Subfinder, Amass, Sherlock, Recon-ng, SpiderFoot installed by default
-- **Network Scanning**: Nmap, Masscan, Nuclei, HTTPx for network reconnaissance
-- **Security Testing**: Nikto, WPScan, GoBuster, SQLMap for vulnerability assessment
-- **Threat Intelligence**: Shodan, Censys, VirusTotal, SecurityTrails MCP integration
-- **GitHub Integration**: Comprehensive GitHub API helper with backup/restore for knowledge base
-- **OSINT Toolkit**: Unified tool for subdomain enumeration, email harvesting, social media search
-- **Certificate Intelligence**: Certificate transparency log search for subdomain discovery
-- **Comprehensive Documentation**: OSINT guide, security best practices, API configuration
+
 
 ### v0.9.6 - Memory Dashboard
 [Release video](https://youtu.be/sizjAq2-d9s)

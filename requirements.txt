@@ -42,3 +42,26 @@ crontab==1.0.1
 pathspec>=0.12.1
 psutil>=7.0.0
 soundfile==0.13.1
+
+# Hacking and OSINT Libraries
+scapy==2.6.1
+shodan==1.31.0
+python-nmap==0.7.1
+censys==2.2.15
+dnspython==2.7.0
+requests==2.32.3
+beautifulsoup4==4.12.3
+pycryptodome==3.21.0
+fabric==3.2.2
+impacket==0.13.0
+pwntools==4.13.1
+pymetasploit3==1.0.3
+
+# Additional OSINT Tools
+holehe==2.2.1
+h8mail==2.5.6
+phonenumbers==8.13.50
+lxml==5.3.0
+selenium==4.27.1
+socid-extractor==0.0.27
+search-engine-parser==0.6.8

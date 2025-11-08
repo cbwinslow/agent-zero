@@ -1,0 +1,56 @@
+# Labeler configuration for auto-labeling PRs
+# https://github.com/actions/labeler
+
+# Python files
+python:
+  - '**/*.py'
+  - 'requirements.txt'
+
+# JavaScript/Web UI
+javascript:
+  - 'webui/**/*.js'
+  - 'webui/**/*.html'
+  - 'webui/**/*.css'
+
+# Documentation
+documentation:
+  - 'docs/**/*'
+  - '**/*.md'
+
+# Docker
+docker:
+  - '**/Dockerfile*'
+  - '**/docker-compose*.yml'
+  - 'docker/**/*'
+
+# GitHub Actions
+ci/cd:
+  - '.github/workflows/**/*'
+  - '.github/**/*.yml'
+
+# Configuration
+configuration:
+  - 'conf/**/*'
+  - '*.json'
+  - '*.yml'
+  - '*.yaml'
+
+# Tests
+tests:
+  - 'tests/**/*'
+
+# MCP related
+mcp:
+  - 'python/helpers/mcp_*.py'
+  - 'python/api/mcp_*.py'
+  - 'conf/mcp_*.json'
+  - 'docs/mcp_*.md'
+  - 'webui/components/settings/mcp/**/*'
+
+# API
+api:
+  - 'python/api/**/*'
+
+# Helpers
+helpers:
+  - 'python/helpers/**/*'

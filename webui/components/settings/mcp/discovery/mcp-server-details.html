@@ -1,0 +1,177 @@
+<html>
+
+<head>
+    <title>MCP Server Details</title>
+</head>
+
+<body>
+    <div x-data>
+        <template x-if="$store.mcpDiscoveryStore && $store.mcpDiscoveryStore.selectedServer">
+            <div>
+                <template x-data="{ server: $store.mcpDiscoveryStore.selectedServer }">
+                    <div>
+                        <h3>
+                            <span x-text="$store.mcpDiscoveryStore.getSourceIcon(server.source)"></span>
+                            <span x-text="server.name"></span>
+                        </h3>
+
+                        <div class="detail-section">
+                            <div class="detail-label">Source</div>
+                            <div class="detail-value">
+                                <span :style="'color: ' + $store.mcpDiscoveryStore.getSourceColor(server.source)"
+                                    x-text="server.source"></span>
+                            </div>
+                        </div>
+
+                        <div class="detail-section">
+                            <div class="detail-label">Description</div>
+                            <div class="detail-value" x-text="server.description || 'No description available'"></div>
+                        </div>
+
+                        <template x-if="server.version">
+                            <div class="detail-section">
+                                <div class="detail-label">Version</div>
+                                <div class="detail-value" x-text="server.version"></div>
+                            </div>
+                        </template>
+
+                        <template x-if="server.language">
+                            <div class="detail-section">
+                                <div class="detail-label">Language</div>
+                                <div class="detail-value" x-text="server.language"></div>
+                            </div>
+                        </template>
+
+                        <template x-if="server.stars || server.downloads || server.pulls">
+                            <div class="detail-section">
+                                <div class="detail-label">Popularity</div>
+                                <div class="detail-value">
+                                    <template x-if="server.stars">
+                                        <span>⭐ <span x-text="$store.mcpDiscoveryStore.formatNumber(server.stars)"></span> stars</span>
+                                    </template>
+                                    <template x-if="server.downloads">
+                                        <span>📥 <span x-text="$store.mcpDiscoveryStore.formatNumber(server.downloads)"></span> downloads</span>
+                                    </template>
+                                    <template x-if="server.pulls">
+                                        <span>📥 <span x-text="$store.mcpDiscoveryStore.formatNumber(server.pulls)"></span> pulls</span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="server.last_updated">
+                            <div class="detail-section">
+                                <div class="detail-label">Last Updated</div>
+                                <div class="detail-value" x-text="$store.mcpDiscoveryStore.formatDate(server.last_updated)"></div>
+                            </div>
+                        </template>
+
+                        <template x-if="server.topics && server.topics.length > 0">
+                            <div class="detail-section">
+                                <div class="detail-label">Topics</div>
+                                <div class="detail-value">
+                                    <div class="topics-list">
+                                        <template x-for="topic in server.topics" :key="topic">
+                                            <span class="topic-tag" x-text="topic"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div class="detail-section">
+                            <div class="detail-label">Links</div>
+                            <div class="detail-value">
+                                <template x-if="server.npm_url">
+                                    <a :href="server.npm_url" target="_blank" class="external-link">npm Package →</a>
+                                </template>
+                                <template x-if="server.github_url">
+                                    <a :href="server.github_url" target="_blank" class="external-link">GitHub Repository →</a>
+                                </template>
+                                <template x-if="server.docker_url">
+                                    <a :href="server.docker_url" target="_blank" class="external-link">Docker Hub →</a>
+                                </template>
+                                <template x-if="server.homepage">
+                                    <a :href="server.homepage" target="_blank" class="external-link">Homepage →</a>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button class="btn primary" 
+                                @click="$store.mcpDiscoveryStore.addServerToConfig(server)">
+                                ➕ Copy Configuration
+                            </button>
+                        </div>
+
+                        <div class="install-note">
+                            <strong>Note:</strong> Configuration will be copied to your clipboard. 
+                            Paste it into your MCP Servers configuration editor, enable it, and apply.
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <style>
+        .detail-section {
+            margin-bottom: 1.2em;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            margin-bottom: 0.3em;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .detail-value {
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .topics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em;
+        }
+
+        .topic-tag {
+            padding: 0.2em 0.6em;
+            border: 1px solid rgba(192, 192, 192, 0.3);
+            border-radius: 12px;
+            font-size: 0.85em;
+            background: rgba(192, 192, 192, 0.1);
+        }
+
+        .external-link {
+            display: inline-block;
+            margin-right: 1em;
+            margin-bottom: 0.5em;
+            color: var(--c-primary);
+            text-decoration: none;
+        }
+
+        .external-link:hover {
+            text-decoration: underline;
+        }
+
+        .button-group {
+            margin-top: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        .install-note {
+            padding: 0.8em;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 4px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+    </style>
+
+</body>
+
+</html>
